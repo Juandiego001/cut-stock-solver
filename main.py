@@ -5,24 +5,6 @@ import random
 import numpy as np
 from scipy.stats import norm
 
-# Definición de variables globales
-ancho_grande: int = 0
-largo_grande: int = 0
-c: int = 4
-nombre_archivo: str = 'pruebas.txt'
-items: list = []
-
-
-class Item:
-    def __init__(self, id: int = 0, dem: int = 0, ancho: int = 0, largo: int = 0):  # Constructor
-        self.id = id
-        self.dem = dem
-        self.ancho = ancho
-        self.largo = largo
-
-    def __str__(self):
-        return f'Item #{self.id}: Ancho: {self.ancho} Largo: {self.largo} Demanda: {self.dem}'
-
 
 class ItemCapacidad:
     def __init__(self, id: int = 0, capacidad: int = 0, area: int = 0):  # Constructor
@@ -35,11 +17,12 @@ class ItemCapacidad:
 
 
 class SubEs:
-    def __init__(self, ancho: int = 0, largo: int = 0, area_disponible: float = 0.0, items_capacidad: dict = {}):  # Constructor
+    def __init__(self, ancho: int = 0, largo: int = 0, items_capacidad: dict = {}):  # Constructor
         self.ancho = ancho  # Ancho del subespacio
         self.largo = largo  # Largo del subespacio
-        self.area_disponible = area_disponible  # Área disponible del subespacio
-        self.items_capacidad = items_capacidad # Capacidad de cada item dentro del subespacio
+        self.area_disponible = ancho*largo
+        # Capacidad de cada item dentro del subespacio
+        self.items_capacidad = {}
 
     def __str__(self):
         return f'Ancho: {self.ancho}\nLargo: {self.largo}\nÁrea disponible: {self.area_disponible}\n' +\
@@ -49,14 +32,14 @@ class SubEs:
 
 
 class Solution:
-    def __init__(self, T: list = [], H: list = [], v_sub: list = [], dem_com: dict = {}, dem_fal: dict = {}, desperdicio: float = 0.0, fitness: int = 0):  # Constructor
-        self.T = T  # 0 -> Corte Horizontal, 1 -> Corte Vertial
-        self.H = H  # Decimal: Porcentaje de corte
-        self.v_sub = v_sub  # Vector de subespacios
-        self.dem_com = dem_com  # Demanda completada
-        self.dem_fal = dem_fal  # Demanda faltante
-        self.desperdicio = desperdicio  # Desperdicio final
-        self.fitness = fitness  # Puntuación de que tan buena es la solución
+    def __init__(self):  # Constructor
+        self.T = []  # 0 -> Corte Horizontal, 1 -> Corte Vertial
+        self.H = []  # Decimal: Porcentaje de corte
+        self.v_sub = []  # Vector de subespacios
+        self.dem_com = {}  # Demanda completada
+        self.dem_fal = {}  # Demanda faltante
+        self.desperdicio = 0.0  # Desperdicio final
+        self.fitness = 0  # Puntuación de que tan buena es la solución
 
     def __str__(self):
         return f'''T: {self.T}
@@ -67,38 +50,6 @@ Demanda faltante: {self.dem_fal}
 Desperdicio: {self.desperdicio}
 Fitness: {self.fitness}
 '''
-
-
-def lectura():
-    '''
-    Lectura del archivo de pruebas. Para nuestro caso el nombre es "instance.txt".
-
-    Consideraciones:
-    La primer línea del archivo corresponde al ancho.
-    La segunda línea del archivo corresponde al largo.
-    Las demás líneas corresponden a los ítems con el siguiente formato:
-    Id  Demanda Ancho Largo
-    '''
-    global ancho_grande, largo_grande, items
-
-    nombre_archivo = input(
-        'Ingresar el nombre del archivo de pruebas o dejar en blanco para el archivo por defecto (pruebas.txt): ')
-    nombre_archivo = 'pruebas.txt' if nombre_archivo == '' else nombre_archivo
-
-    v = []
-    f = open(f'./cases/{nombre_archivo}', 'r')
-    lineas_archivo = f.readlines()
-    ancho_grande = int(lineas_archivo[0])
-    largo_grande = int(lineas_archivo[1])
-
-    for line in lineas_archivo[2:]:
-        id, demanda, ancho, largo = line.split('\t')
-        demanda.replace('\n', '')  # Se remueve el último salto de línea
-        item = Item(int(id), int(demanda), int(ancho), int(largo))
-        v.append(item)
-
-    f.close()
-    items = copy.deepcopy(v)
 
 
 def hacer_corte(sub_esp: SubEs, T: int = 0, H: float = 0.0):
@@ -120,7 +71,7 @@ def hacer_corte(sub_esp: SubEs, T: int = 0, H: float = 0.0):
     return sub_esp1, sub_esp2
 
 
-def generacion_subespacios(s: Solution, corte: int = 0, cola: list = []):
+def generacion_subespacios(s: Solution, c: int, corte: int = 0, cola: list = []):
     '''Función para generar los subespacios'''
 
     if len(cola) == 2**c:
@@ -136,13 +87,12 @@ def generacion_subespacios(s: Solution, corte: int = 0, cola: list = []):
             copia_cola.append(sub_esp2)
 
         cola = copy.deepcopy(copia_cola)
-        return generacion_subespacios(s, corte, cola)
+        return generacion_subespacios(s, c, corte, cola)
 
 
-def decode11(s: Solution):
+def decode11(s: Solution, items):
     '''Función para decodificar las soluciones 1 - 1'''
 
-    global items
     for sub_esp in s.v_sub:
         ancho: int = sub_esp.ancho
         largo: int = sub_esp.largo
@@ -193,10 +143,9 @@ def print_list(the_list: list):
         print(str(each_element))
 
 
-def decode12(s: Solution):
+def decode12(s: Solution, c, items):
     '''Función para decodificar las soluciones 1 - 2'''
 
-    global items
     aux_v_sub = aux_items = 0
 
     '''Organizar items por area de mayor a menor'''
@@ -275,17 +224,15 @@ def generate_h_value():
     Se valida que H no sea 1 ni 0.
     Random reference: https://docs.python.org/3/library/random.html#random.random
     '''
-    
+
     H = round(random.random(), 2)
     while H == 0.0 or H == 1.0:
         H = round(random.random(), 2)
     return H
 
 
-def sol_inicial():
+def sol_inicial(ancho_grande, largo_grande, c, items):
     '''Definición de solución inicial'''
-
-    global c, items
 
     s = Solution()
     for i in range(2**c - 1):
@@ -303,7 +250,7 @@ def sol_inicial():
     cola = [sub_esp1, sub_esp2]
 
     '''Se generan subespacios con una copia de la solución con T y H generados'''
-    s.v_sub = generacion_subespacios(copy.deepcopy(s), 1, cola)
+    s.v_sub = generacion_subespacios(copy.deepcopy(s), c, 1, cola)
 
     '''Se calculan las áreas disponibles de los subespacios y
     se inicializan en 0 las capacidades de cada item en cada subespacio
@@ -316,10 +263,8 @@ def sol_inicial():
     return s
 
 
-def generar_solucion_vecino(s: Solution):
+def generar_solucion_vecino(s: Solution, ancho_grande, largo_grande, c, items):
     '''Función para generar la solución vecino'''
-
-    global c, items
 
     '''Vector iniciales de demandas completadas y faltantes'''
     for item in items:
@@ -332,7 +277,7 @@ def generar_solucion_vecino(s: Solution):
     cola = [sub_esp1, sub_esp2]
 
     '''Se generan subespacios con una copia de la solución con T y H generados'''
-    s.v_sub = generacion_subespacios(copy.deepcopy(s), 1, cola)
+    s.v_sub = generacion_subespacios(copy.deepcopy(s), c, 1, cola)
 
     '''Se calculan las áreas disponibles de los subespacios y
     se inicializan en 0 las capacidades de cada item en cada subespacio
@@ -341,21 +286,18 @@ def generar_solucion_vecino(s: Solution):
     for i, sub_es in enumerate(v_sub_copy):
         s.v_sub[i].items_capacidad = {item.id: 0 for item in items}
         s.v_sub[i].area_disponible = sub_es.ancho * sub_es.largo
-    
+
     '''Se reinicia el desperdicio a 0 para el vecino'''
     s.desperdicio = 0.0
     return s
 
 
-def make_vecino_t(s: Solution):
+def vecindario_t(s: Solution, ancho_grande, largo_grande, c, items):
     '''Crear un vecino basandose en el vector T'''
-
-    '''Escribir en un archivo los vecinos generados'''
-    f = open('./debug/T/vecinos.txt', 'w', encoding='utf8')
-    f.write(f'Vector T original: {str(s.T)}\n')
 
     best_fitness = sys.maxsize
     s_copy = copy.deepcopy(s)
+    vecinos = []
     for i in range(len(s.T)):
         vector_t = copy.deepcopy(s.T)
 
@@ -363,29 +305,24 @@ def make_vecino_t(s: Solution):
         vector_t[i] = 0 if s.T[i] == 1 else 1
 
         s_copy.T = vector_t
-        s_vecino = generar_solucion_vecino(s_copy)
-        decode11(s_vecino)
-
-        f.write(f'Vecino {i} - T generado.\n{str(s_vecino)}\n\n')
+        s_vecino = generar_solucion_vecino(s_copy, ancho_grande, largo_grande, c, items)
+        decode11(s_vecino, items)
+        vecinos.append(copy.deepcopy(s_vecino))
 
         '''Actualizar mejor solución'''
         if s_vecino.fitness < best_fitness:
             best_fitness = s_vecino.fitness
             s_mejor = copy.deepcopy(s_vecino)
 
-    f.close()
-    return s_mejor
+    return s_mejor, vecinos
 
 
-def make_vecino_h(s: Solution):
+def vecindario_h(s: Solution, ancho_grande, largo_grande, c, items):
     '''Crear un vecino basandose en el vector H'''
-
-    '''Escribir en un archivo los vecinos generados'''
-    f = open('./debug/H/vecinos.txt', 'w', encoding='utf8')
-    f.write(f'Vector H original: {str(s.H)}\n\n')
 
     best_fitness = sys.maxsize
     s_copy = copy.deepcopy(s)
+    vecinos = []
     for i in range(len(s.H)):
         vector_h = copy.deepcopy(s.H)
 
@@ -395,74 +332,24 @@ def make_vecino_h(s: Solution):
             p = np.random.rand()
 
             '''Distribución Normal Inversa'''
-            inverse_normal = float(round(norm.ppf(p, loc=0, scale=0.3), 2))
-            # print('Inverse normal: ', inverse_normal)
+            inverse_normal = float(round(norm.ppf(p, loc=0, scale=0.3), 4))
 
             '''Hacer un H temporal con la perturbación'''
             temp_h = round(vector_h[i] + inverse_normal, 2)
 
-            if temp_h >= 1.0 or temp_h <= 0.0: vector_h[i] = generate_h_value()
-            else: vector_h[i] = temp_h
-        
-        # print('\n')
+            if temp_h >= 1.0 or temp_h <= 0.0:
+                vector_h[i] = generate_h_value()
+            else:
+                vector_h[i] = temp_h
 
         s_copy.H = vector_h
-        s_vecino = generar_solucion_vecino(s_copy)
-        decode11(s_vecino)
-
-        f.write(f'Vecino {i} - H generado.\n{str(s_vecino)}\n')
+        s_vecino = generar_solucion_vecino(s_copy, ancho_grande, largo_grande, c, items)
+        decode11(s_vecino, items)
+        vecinos.append(copy.deepcopy(s_vecino))
 
         '''Actualizar mejor solución'''
         if s_vecino.fitness < best_fitness:
             best_fitness = s_vecino.fitness
             s_mejor = copy.deepcopy(s_vecino)
 
-    f.close()
-    return s_mejor
-
-
-# Método main
-if __name__ == '__main__':
-    lectura()
-
-    sol_ini = sol_inicial()
-    sol_ini2 = copy.deepcopy(sol_ini)
-
-    '''Se calcula el z de la solución inicial con decode11'''
-    decode11(sol_ini)
-
-    print('Solución inicial con Decode 11: ')
-    print(str(sol_ini))
-
-    # '''Se calcula el z de la solución inicial con decode12'''
-    # decode12(sol_ini2)
-
-    # print('Solución inicial con Decode 12: ')
-    # print(str(sol_ini2))
-
-    mejor_solucion = copy.deepcopy(sol_ini)
-    while True:
-        # mejor_vecino_t = make_vecino_t(sol_ini)
-        mejor_vecino_h = make_vecino_h(sol_ini)
-
-        '''Se determina el mejor vecino'''
-        # if mejor_vecino_h.fitness < mejor_vecino_t.fitness:
-        #     mejor_vecino = mejor_vecino_h
-        # else:
-        #     mejor_vecino = mejor_vecino_t
-        
-        mejor_vecino = mejor_vecino_h
-
-        print(f'Mejor vecino fitness: {mejor_vecino.fitness}')
-        print(f'Mejor solucion fitness: {mejor_solucion.fitness}\n')
-
-        '''Si el mejor vecino es mejor que la mejor solución iterada, entonces actualice la mejor solución iterada,
-        de lo contrario termine el ciclo
-        '''
-        if mejor_vecino.fitness < mejor_solucion.fitness:
-            mejor_solucion = mejor_vecino
-        else:
-            break
-    
-    print('Mejor solución: ')
-    print(str(mejor_solucion))
+    return s_mejor, vecinos

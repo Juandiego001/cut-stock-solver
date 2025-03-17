@@ -1,3 +1,5 @@
 debug
 venv
 cases
+reports
+__pycache__
