@@ -40,6 +40,7 @@ class Solution:
         self.dem_fal = {}  # Demanda faltante
         self.desperdicio = 0.0  # Desperdicio final
         self.fitness = 0  # Puntuación de que tan buena es la solución
+        self.cortes = []  # Guardar los cortes de la solución para la representación gráfica
 
     def __str__(self):
         return f'''T: {self.T}
@@ -50,6 +51,19 @@ Demanda faltante: {self.dem_fal}
 Desperdicio: {self.desperdicio}
 Fitness: {self.fitness}
 '''
+    
+    def to_dict(self):
+        temp_sub_es = [{'id': i, 'h': (sub_es.largo)*100, 'w': (sub_es.ancho)*100, 'r': sub_es.items_capacidad} for i, sub_es in enumerate(self.v_sub)]
+        return {
+            't': self.T,
+            'h': self.H,
+            'subSpaces': temp_sub_es,
+            'demComp': self.dem_com,
+            'demFal': self.dem_fal,
+            'desperdicio': self.desperdicio,
+            'fitness': self.fitness,
+            'cortes': self.cortes + temp_sub_es
+        }
 
 
 def hacer_corte(sub_esp: SubEs, T: int = 0, H: float = 0.0):
@@ -71,11 +85,11 @@ def hacer_corte(sub_esp: SubEs, T: int = 0, H: float = 0.0):
     return sub_esp1, sub_esp2
 
 
-def generacion_subespacios(s: Solution, c: int, corte: int = 0, cola: list = []):
+def generacion_subespacios(s: Solution, c: int, corte: int = 0, cola: list = [], cortes: list = []):
     '''Función para generar los subespacios'''
 
     if len(cola) == 2**c:
-        return cola
+        return cola, cortes
     else:
         copia_cola = []
         for sub_esp in cola:
@@ -83,11 +97,12 @@ def generacion_subespacios(s: Solution, c: int, corte: int = 0, cola: list = [])
             H: float = s.H[corte]
             sub_esp1, sub_esp2 = hacer_corte(sub_esp, T, H)
             corte += 1
+            cortes.append({'h': (sub_esp.largo)*100, 'w': (sub_esp.ancho)*100, 'c': { 't': T, 'h': H }})
             copia_cola.append(sub_esp1)
             copia_cola.append(sub_esp2)
 
         cola = copy.deepcopy(copia_cola)
-        return generacion_subespacios(s, c, corte, cola)
+        return generacion_subespacios(s, c, corte, cola, cortes)
 
 
 def decode11(s: Solution, items):
@@ -128,8 +143,8 @@ def decode11(s: Solution, items):
     '''Se calcula el desperdicio como el área disponible de cada subespacio'''
     '''El desperdicio se suma solamente si el subespacio fue utilizado para satisfacer la demanda de un item'''
     for sub_es in s.v_sub:
-        if sum(sub_es.items_capacidad.values()) > 0:
-            s.desperdicio += sub_es.area_disponible
+        s.desperdicio += sub_es.area_disponible
+        # if sum(sub_es.items_capacidad.values()) > 0:
 
     '''Se calcula el fitness como la suma del desperdicio + una constante por la demanda faltante'''
     s.fitness = s.desperdicio + 2 * \
@@ -209,8 +224,8 @@ def decode12(s: Solution, c, items):
     '''Se calcula el desperdicio como el área disponible de cada subespacio'''
     '''El desperdicio se suma solamente si el subespacio fue utilizado para satisfacer la demanda de un item'''
     for sub_es in s.v_sub:
-        if sum(sub_es.items_capacidad.values()) > 0:
-            s.desperdicio += sub_es.area_disponible
+        s.desperdicio += sub_es.area_disponible
+        # if sum(sub_es.items_capacidad.values()) > 0:
 
     '''Se calcula el fitness como la suma del desperdicio + una constante por la demanda faltante'''
     s.fitness = s.desperdicio + 2 * \
@@ -247,10 +262,14 @@ def sol_inicial(ancho_grande, largo_grande, c, items):
     '''Se agrega el item base como un subespacio inicial'''
     sub_inicial: SubEs = SubEs(ancho_grande, largo_grande)
     sub_esp1, sub_esp2 = hacer_corte(sub_inicial, s.T[0], s.H[0])
+    cortes = [{'h': sub_inicial.largo, 'w': sub_inicial.ancho, 'c': {'t': s.T[0], 'h': s.H[0]}}]
     cola = [sub_esp1, sub_esp2]
 
     '''Se generan subespacios con una copia de la solución con T y H generados'''
-    s.v_sub = generacion_subespacios(copy.deepcopy(s), c, 1, cola)
+    s.v_sub, cortes = generacion_subespacios(copy.deepcopy(s), c, 1, cola, cortes)
+
+    '''Se asignan los cortes realizados a la solución para el reporte web'''
+    s.cortes = cortes
 
     '''Se calculan las áreas disponibles de los subespacios y
     se inicializan en 0 las capacidades de cada item en cada subespacio
@@ -274,10 +293,14 @@ def generar_solucion_vecino(s: Solution, ancho_grande, largo_grande, c, items):
     '''Se agrega el item base como un subespacio inicial'''
     sub_inicial: SubEs = SubEs(ancho_grande, largo_grande)
     sub_esp1, sub_esp2 = hacer_corte(sub_inicial, s.T[0], s.H[0])
+    cortes = [{'h': sub_inicial.largo, 'w': sub_inicial.ancho, 'c': {'t': s.T[0], 'h': s.H[0]}}]
     cola = [sub_esp1, sub_esp2]
 
     '''Se generan subespacios con una copia de la solución con T y H generados'''
-    s.v_sub = generacion_subespacios(copy.deepcopy(s), c, 1, cola)
+    s.v_sub, cortes = generacion_subespacios(copy.deepcopy(s), c, 1, cola, cortes)
+
+    '''Se asignan los cortes realizados a la solución para el reporte web'''
+    s.cortes = cortes
 
     '''Se calculan las áreas disponibles de los subespacios y
     se inicializan en 0 las capacidades de cada item en cada subespacio

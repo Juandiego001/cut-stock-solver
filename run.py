@@ -2,8 +2,9 @@ import os
 import copy
 from datetime import datetime
 from multiprocessing import Process
+from gen_reports_web import write_base_index, write_base_styles_files, write_final_index, write_gen_html_tags, write_gen_konva, write_konva_for_decode, write_konva_for_sub
 from main import sol_inicial, decode11, vecindario_t, vecindario_h
-from gen_reports import create_sheets_summary, create_sheets_iterations, write_test_case, write_solution, write_iterations, write_iterations_summary
+from gen_reports_excel import create_sheets_summary, create_sheets_iterations, write_test_case, write_solution, write_iterations, write_iterations_summary
 
 # Definición de variables globales
 cases_dir = 'cases'
@@ -49,6 +50,104 @@ def lectura(case: str):
     return ancho_grande, largo_grande, items
 
 
+def generate_reports_web(report_folder, data):
+    '''Generar reportes de excel'''
+
+    '''Se crean las carpetas donde se guardará el reporte web'''
+    os.makedirs(f'{report_folder}/web/js/iterations')
+    os.makedirs(f'{report_folder}/web/styles')
+
+    '''Se escriben los archivos de CSS'''
+    write_base_styles_files(f'{report_folder}/web/styles')
+
+    '''Se escribe el archivo index.html'''
+    index_html_file = open(f'{report_folder}/web/index.html', 'w+', encoding='utf-8')
+    write_base_index(index_html_file)
+    index_html_file.close()
+
+    test_case = data['test_case']
+    sol_ini = data['sol_ini']
+    vecinos_summary = data['vecinos_summary']
+    mejor_solucion = data['mejor_solucion']
+    iterations = data['iterations']
+
+    case = test_case['case']
+    items = test_case['items']
+
+    # Creación del javascript del caso de prueba
+    f = open(f'{report_folder}/web/js/data_caso_prueba.js', 'w', encoding='utf-8')
+    data = {
+        'anchoGrande': test_case['ancho_grande'],
+        'largoGrande': test_case['largo_grande'],
+    }
+
+    demandas = []
+    for i, item in enumerate(items):
+        demanda = {
+            'id': i + 1,
+            'demanda': item.dem,
+            'ancho': item.ancho,
+            'largo': item.largo
+        }
+        demandas.append(demanda)
+    data['demandas'] = demandas
+
+    f.write(f'let data_caso_prueba = {str(demandas)};')
+    f.close()
+
+    '''Escribir la solución inicial'''
+    f = open(f'{report_folder}/web/js/data_sol_inicial.js', 'w', encoding='utf-8')
+    f.write(f'let data_sol_inicial = {str(sol_ini.to_dict())};')
+    f.close()
+
+    '''Escribir el resumen de las iteraciones'''
+    f = open(f'{report_folder}/web/js/data_iterations_summary.js', 'w', encoding='utf-8')
+    for iter, fit_t, fit_h, best in vecinos_summary:
+        data = {
+            'id': iter, 't': fit_t, 'h': fit_h, 'best': best
+        }
+        # write_iterations_summary_web(iter, fit_t, fit_h, best)
+        if fit_t < fit_h and fit_t < best:
+            data['moveTo'] = 'h'
+        elif fit_h < fit_t and fit_h < best:
+            data['moveTo'] = 't'
+        f.writelines(f'let data_iteration_{iter} = {str(data)};')
+    f.close()
+
+    '''Escribir la solución'''
+    f = open(f'{report_folder}/web/js/data_solucion.js', 'w', encoding='utf-8')
+    f.write(f'let data_solucion = {str(mejor_solucion.to_dict())};')
+    f.close()
+
+    '''Escribir el detalle de las iteraciones'''
+    all_vecinos_t = iterations['all_vecinos_t']
+    all_vecinos_h = iterations['all_vecinos_h']
+    for i, iter in enumerate(range(iterations['count'])):
+        v_t, _ = all_vecinos_t[i]
+        v_h, _ = all_vecinos_h[i]
+
+        f = open(f'{report_folder}/web/js/iterations/{iter + 1}_t.js', 'w', encoding='utf-8')
+        for j, vecino in enumerate(v_t):
+            f.writelines(f'let data_iteration_vecino_t_{iter + 1}_{j + 1} = {str(vecino.to_dict())};\n')
+        f.close()
+
+        f = open(f'{report_folder}/web/js/iterations/{iter + 1}_h.js', 'w', encoding='utf-8')
+        for j, vecino in enumerate(v_h):
+            f.writelines(f'let data_iteration_vecino_h_{iter + 1}_{j + 1} = {str(vecino.to_dict())};\n')
+        f.close()
+    
+    '''Escribir los Javascript generadores del contenido de la página'''
+    write_gen_html_tags(iterations['count'], c, report_folder)
+    write_konva_for_sub(report_folder)
+    write_konva_for_decode(report_folder)
+    write_gen_konva(iterations['count'], c, report_folder)
+
+    '''Escribir la parte final del archivo index.html'''
+    index_html_file = open(f'{report_folder}/web/index.html', 'a', encoding='utf-8')
+    write_final_index(iterations['count'], index_html_file)
+    index_html_file.close()
+
+
 def generate_reports(report_folder, data):
     '''Generar reportes de excel'''
 
@@ -57,8 +156,7 @@ def generate_reports(report_folder, data):
     vecinos_summary = data['vecinos_summary']
     mejor_solucion = data['mejor_solucion']
     iterations = data['iterations']
-    
-    
+
     case = test_case['case']
     items = test_case['items']
 
@@ -75,10 +173,10 @@ def generate_reports(report_folder, data):
     '''Escribir el resumen de las iteraciones'''
     for iter, fit_t, fit_h, best in vecinos_summary:
         write_iterations_summary(wb_summary['Iteraciones'],
-                                iter,
-                                fit_t,
-                                fit_h,
-                                best)
+                                 iter,
+                                 fit_t,
+                                 fit_h,
+                                 best)
 
     '''Escribir la solución'''
     write_solution(wb_summary['Solucion'], mejor_solucion, 1)
@@ -97,8 +195,10 @@ def generate_reports(report_folder, data):
         v_t, _ = all_vecinos_t[i]
         v_h, _ = all_vecinos_h[i]
 
-        write_iterations(wb_iterations[f'{iter}_VecinosT'], v_t, iter, c, len(items))
-        write_iterations(wb_iterations[f'{iter}_VecinosH'], v_h, iter, c, len(items))
+        write_iterations(
+            wb_iterations[f'{iter}_VecinosT'], v_t, iter, c, len(items))
+        write_iterations(
+            wb_iterations[f'{iter}_VecinosH'], v_h, iter, c, len(items))
 
         wb_iterations.save(f'{report_folder}/iterations/{case}_{iter}.xlsx')
         wb_iterations.close()
@@ -128,8 +228,10 @@ def run_case(report_folder, case, with_reports=True):
 
     iteration = 1
     while True:
-        mejor_vecino_t, vecinos_t = vecindario_t(mejor_solucion, ancho_grande, largo_grande, c, items)
-        mejor_vecino_h, vecinos_h = vecindario_h(mejor_solucion, ancho_grande, largo_grande, c, items)
+        mejor_vecino_t, vecinos_t = vecindario_t(
+            mejor_solucion, ancho_grande, largo_grande, c, items)
+        mejor_vecino_h, vecinos_h = vecindario_h(
+            mejor_solucion, ancho_grande, largo_grande, c, items)
 
         '''Almacenar para reporte'''
         vecinos_summary.append((iteration,
@@ -155,7 +257,7 @@ def run_case(report_folder, case, with_reports=True):
             # elif (iteration - 1) == max_iterations:
             #     break
         else:
-            break        
+            break
 
         iteration += 1
 
@@ -179,7 +281,8 @@ def run_case(report_folder, case, with_reports=True):
             }
         }
 
-        generate_reports(report_folder, data)
+        # generate_reports(report_folder, data)
+        generate_reports_web(report_folder, data)
 
 
 if __name__ == '__main__':
@@ -188,7 +291,8 @@ if __name__ == '__main__':
     start_date = datetime.now()
 
     '''Creación de carpeta de reporte'''
-    date_now = str(datetime.now().replace(microsecond=0)).replace(' ', '_').replace(':', '_')
+    date_now = str(datetime.now().replace(microsecond=0)
+                   ).replace(' ', '_').replace(':', '_')
     report_folder = f'./reports/report_{date_now}'
     os.mkdir(report_folder)
 
@@ -199,19 +303,18 @@ if __name__ == '__main__':
             case = case_file.split('.')[0]
             p = Process(target=run_case, args=(report_folder, case))
             all_processes.append(p)
-        
+
         for each_process in all_processes:
             each_process.start()
 
         for each_process in all_processes:
             each_process.join()
-
-
     else:
-        case_file = input('Digite el nombre del caso que desea ejecutar (o dejar en blanco para test1): ')
+        case_file = input(
+            'Digite el nombre del caso que desea ejecutar (o dejar en blanco para test1): ')
         case_file = 'test1' if not case_file else case_file
         run_case(report_folder, case_file)
-        
+
     '''Tiempo final'''
     end_date = datetime.now()
     elapsed_time = (end_date - start_date).seconds
