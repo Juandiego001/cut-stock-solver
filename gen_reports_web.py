@@ -1,39 +1,41 @@
 from io import TextIOWrapper
 
-def write_final_index(iterations, file: TextIOWrapper):
-  '''Función para escribir la parte final del archivo index.html'''
 
-  script_tags = '''
+def write_final_index(iterations, file: TextIOWrapper):
+    '''Función para escribir la parte final del archivo index.html'''
+
+    script_tags = '''
 <script src="https://unpkg.com/konva@9/konva.min.js"></script>
 <script src="js/data_caso_prueba.js"></script>
 <script src="js/data_iterations_summary.js"></script>
 <script src="js/data_sol_inicial.js"></script>
 <script src="js/data_solucion.js"></script>
 '''
-  for i in range(iterations):
-    script_tags += f'<script src="js/iterations/{i+1}_h.js"></script>\n'
-    script_tags += f'<script src="js/iterations/{i+1}_t.js"></script>\n'
+    for i in range(iterations):
+        script_tags += f'<script src="js/iterations/{i+1}_h.js"></script>\n'
+        script_tags += f'<script src="js/iterations/{i+1}_t.js"></script>\n'
 
-  script_tags += '''
+    script_tags += '''
 <script src="js/konva_for_sub_decode.js"></script>
 <script src="js/konva_for_sub_spaces.js"></script>
 <script src="js/gen_html_tags.js"></script>
 <script src="js/gen_konva.js"></script>
 '''
 
-  final_part = f'''
+    final_part = f'''
     {script_tags}
   </body>
 </html>
 '''
-  file.writelines(final_part)
+    file.writelines(final_part)
 
 
 def write_konva_for_decode(report_folder):
-  '''Función para escribir una función que permita dibujar el Konva del decode'''
+    '''Función para escribir una función que permita dibujar el Konva del decode'''
 
-  konva_for_decode_file = open(f'{report_folder}/web/js/konva_for_sub_decode.js', 'w', encoding='utf-8')
-  konva_for_decode_file.writelines('''
+    konva_for_decode_file = open(
+        f'{report_folder}/web/js/konva_for_sub_decode.js', 'w', encoding='utf-8')
+    konva_for_decode_file.writelines('''
 function konvaForDecode(containerCanvaId, subSpaces) {
   let layer = new Konva.Layer();
 
@@ -215,164 +217,260 @@ function konvaForDecode(containerCanvaId, subSpaces) {
 
   stage.add(layer);
 }''')
-  konva_for_decode_file.close()
+    konva_for_decode_file.close()
 
 
 def write_konva_for_sub(report_folder):
-  '''Función para escribir una función de dibujar el Konva cada que se envíe una data y un conteinerCanvasId'''
+    '''Función para escribir una función de dibujar el Konva cada que se envíe una data y un conteinerCanvasId'''
 
-  konva_for_sub_file = open(f'{report_folder}/web/js/konva_for_sub_spaces.js', 'w', encoding='utf-8')
-  konva_for_sub_file.writelines('''
+    konva_for_sub_file = open(
+        f'{report_folder}/web/js/konva_for_sub_spaces.js', 'w', encoding='utf-8')
+    konva_for_sub_file.writelines('''
+function drawSubSpace(i, subSpace, layer, children1, children2) {  
+  let width = subSpace.w;
+  let height = subSpace.h;
+  let posX = subSpace.x;
+  let posY = subSpace.y;
+
+  let groupKonva = new Konva.Group({ visible: false });
+  groupKonva.add(new Konva.Rect({
+    x: (i % 2 == 0 ? posX + width : posX - 110),
+    y: posY - 130,
+    width: 120,
+    height: 120,
+    fill: 'white',
+    stroke: 'black',
+    strokeWidth: 1.5
+  }))
+
+  let textInfo = `Índice: ${i}
+Alto: ${height}
+Ancho: ${width}`;
+  if ('c' in subSpace) {
+    textInfo += `
+T: ${subSpace['c'].t}
+H: ${subSpace['c'].h}`;
+  }
+
+  groupKonva.add(new Konva.Text({
+    x: (i % 2 == 0 ? posX + width : posX - 110),
+    y: posY - 130,
+    width: 120,
+    height: 120,
+    text: textInfo,
+    fontSize: 16,
+    fontFamily: 'Roboto',
+    fill: 'black',
+    padding: 10,
+    align: 'center',
+    verticalAlign: 'middle'
+  }))
+
+  let rectMainKonva = new Konva.Rect({
+    id: i,
+    x: posX,
+    y: posY,
+    width: width,
+    height: height,
+    fill: 'white',
+    stroke: 'black',
+    strokeWidth: 1.5,
+  })
+
+  rectMainKonva.on('mouseover', function (event) {
+    groupKonva.setAttrs({ visible: true })
+  })
+
+  rectMainKonva.on('mouseleave', function (event) {
+    groupKonva.setAttrs({ visible: false })
+  })
+
+  layer.add(groupKonva);
+  layer.add(rectMainKonva);
+
+  if ('c' in subSpace) {
+    // Flechas
+    layer.add(new Konva.Arrow({
+      x: posX,
+      y: posY + (height / 2),
+      points: [0, 0, (posX - children1.x - children1.w / 2) * -1, 0, (posX - children1.x - children1.w / 2) * -1, (height / 2)],
+      pointerLength: 10,
+      pointerWidth: 10,
+      fill: 'black',
+      stroke: 'black',
+      strokeWidth: 2
+    }))
+
+    layer.add(new Konva.Arrow({
+      x: posX + width,
+      y: posY + (height / 2),
+      points: [0, 0, (children2.x + (children2.w / 2) - (posX + width)), 0, (children2.x + (children2.w / 2) - (posX + width)), (height / 2)],
+      pointerLength: 10,
+      pointerWidth: 10,
+      fill: 'black',
+      stroke: 'black',
+      strokeWidth: 2
+    }))
+
+    // Lineas de corte
+    let posXLine = posX;
+    let posYLine = posY;
+    let points = [];
+    if (subSpace['c'].t === 0) { // Corte Horizontal
+      posYLine += height * subSpace['c'].h;
+      points = [posXLine, posYLine, posXLine + width, posYLine];
+    } else { // Corte Vertical
+      posXLine += width * subSpace['c'].h;
+      points = [posXLine, posYLine, posXLine, posYLine + height];
+    }
+    layer.add(new Konva.Line({
+      points,
+      stroke: 'black',
+      strokeWidth: 2
+    }));
+  }
+}
+
 function konvaForSubSpaces(containerCanvaId, data) {
   let layer = new Konva.Layer();
 
-  // Punto de partida desde el primer subespacio
-  let centers = [[window.innerWidth / 2, 140]];
-
-  // Calculo para los subespacios de la izquierda
-  let greaterPosY = 0;
-  for (let [i, subSpace] of data.entries()) {
-    let width = (subSpace.w);
-    let height = (subSpace.h);
-    let [centerX, centerY] = centers.shift();
-
-    let posX = centerX - (width / 2);
-    let posY = centerY;
-    greaterPosY = greaterPosY < posY ? posY : greaterPosY;
-
-    let groupKonva = new Konva.Group({ visible: false });
-    groupKonva.add(new Konva.Rect({
-      x: (i % 2 == 0 ? posX + width : posX - 110),
-      y: posY - 130,
-      width: 120,
-      height: 120,
-      fill: 'white',
-      stroke: 'black',
-      strokeWidth: 1.5
-    }))
-
-    let textInfo = `Índice: ${i}\nAlto: ${height}\nAncho: ${width}`;
-    if ('c' in subSpace) {
-      textInfo += `\nT: ${subSpace['c'].t}\nH: ${subSpace['c'].h}`;
-    }
-
-    groupKonva.add(new Konva.Text({
-      x: (i % 2 == 0 ? posX + width : posX - 110),
-      y: posY - 130,
-      width: 120,
-      height: 120,
-      text: textInfo,
-      fontSize: 16,
-      fontFamily: 'Roboto',
-      fill: 'black',
-      padding: 10,
-      align: 'center',
-      verticalAlign: 'middle'
-    }))
-
-    let rectMainKonva = new Konva.Rect({
-      id: i,
-      x: posX,
-      y: posY,
-      width: width,
-      height: height,
-      fill: 'white',
-      stroke: 'black',
-      strokeWidth: 1.5,
-    })
-
-    rectMainKonva.on('mouseover', function (event) {
-      groupKonva.setAttrs({ visible: true })
-    })
-
-    rectMainKonva.on('mouseleave', function (event) {
-      groupKonva.setAttrs({ visible: false })
-    })
-
-    layer.add(groupKonva);
-    layer.add(rectMainKonva);
-
-    if ('c' in subSpace) {
-      let childSubSpace1 = data[(i * 2) + 1];
-      let childSubSpace2 = data[(i * 2) + 2];
-
-      // Flechas
-      layer.add(new Konva.Arrow({
-        x: posX,
-        y: posY + (height / 2),
-        points: [0, 0, (childSubSpace1.w / 2) * -1, 0, (childSubSpace1.w / 2) * -1, (height / 2)],
-        pointerLength: 10,
-        pointerWidth: 10,
-        fill: 'black',
-        stroke: 'black',
-        strokeWidth: 2
-      }))
-
-      layer.add(new Konva.Arrow({
-        x: posX + width,
-        y: posY + (height / 2),
-        points: [0, 0, (childSubSpace2.w / 2), 0, (childSubSpace2.w / 2), (height / 2)],
-        pointerLength: 10,
-        pointerWidth: 10,
-        fill: 'black',
-        stroke: 'black',
-        strokeWidth: 2
-      }))
-
-      // Lineas de corte
-      let posXLine = posX;
-      let posYLine = posY;
-      let points = [];
-      if (subSpace['c'].t === 0) { // Corte Horizontal
-        posYLine += height*subSpace['c'].h;
-        points = [posXLine, posYLine, posXLine + width, posYLine];
-      } else { // Corte Vertical
-        posXLine += width*subSpace['c'].h;
-        points = [posXLine, posYLine, posXLine, posYLine + height];
+  const platesByLevels = [16, 8, 4, 2, 1];
+  let amountBefore = 0;
+  let platesLevels = [];
+  for (let [i, amount] of platesByLevels.entries()) {
+    platesLevels.push(data.toReversed().slice(amountBefore, amountBefore + amount).toReversed());
+    amountBefore += amount;
+  }
+  /*
+    platesLevels = [
+      [16],
+      [8],
+      [4],
+      [2],
+      [1],
+    ]  
+  
+    platesLevel[1] -> [16:23]
+    platesLevel[2] -> [24:27]
+    platesLevel[3] -> [28:29]
+    platesLevel[4] -> [30]
+  */
+  let xByLevels = [150];
+  let levelsLongestHeight = [];
+  for (let [i, amount] of platesByLevels.entries()) {
+    const platesLevel = platesLevels[i];
+    let xLevel = xByLevels[i];
+    if (amount === 1) {
+      levelsLongestHeight.push(platesLevel[0].h);
+    } else {
+      let longestHeight = 0;
+      let previousLevel = platesLevels[i + 1];
+      for (let j = 0; j <= amount - 2; j += 2) {
+        longestHeight = longestHeight < platesLevel[j].h ? platesLevel[j].h : longestHeight;
+        longestHeight = longestHeight < platesLevel[j + 1].h ? platesLevel[j + 1].h : longestHeight;
+        if (i == 0) {
+          let sumWidth = previousLevel[j / 2].c.t == 1 ? (platesLevel[j].w + platesLevel[j + 1].w) : platesLevel[j].w;
+          let x1 = xLevel;
+          let x2 = xLevel + platesLevel[j].w + sumWidth;
+          xLevel += platesLevel[j].w + sumWidth + platesLevel[j + 1].w + 10;
+          if (j == 0) xByLevels.push(x1 + platesLevel[j].w);
+          platesLevel[j].x = x1;
+          platesLevel[j + 1].x = x2;
+          previousLevel[j / 2].x = x1 + platesLevel[j].w;
+        } else {
+          previousLevel[j / 2].x = platesLevel[j].x + platesLevel[j].w;
+        }
       }
-      layer.add(new Konva.Line({
-        points,
-        stroke: 'black',
-        strokeWidth: 2
-      }));
-
-      centers.push([posX - (childSubSpace1.w / 2), posY + height + 10])
-      centers.push([posX + width + (childSubSpace2.w / 2), posY + height + 10])
+      levelsLongestHeight.push(longestHeight);
     }
+  }
+
+  let x = 0;
+  while (x != 4) {
+    let ingreso = false;
+    let previousLevel = platesLevels[x + 1];
+    let platesLevelsLength = platesLevels[x].length;
+    for (let i = 0; i < platesLevelsLength; i += 2) {
+      let plate1 = platesLevels[x][i];
+      let plate2 = platesLevels[x][i + 1];
+      let parentPlate = previousLevel[i / 2];
+      let difference = (plate1.x + plate1.w) - parentPlate.x;
+
+      if (difference > 0) {
+        for (let j = i / 2; j < platesLevels[x + 1].length; j++) {
+          platesLevels[x + 1][j].x += difference;
+        }
+        ingreso = true;
+      }
+
+      let difference2 = (parentPlate.x + parentPlate.w) - plate2.x;
+      if (difference2 > 0) {
+        for (let j = i + 1; j < platesLevels[x].length; j++) {
+          platesLevels[x][j].x += difference2;
+        }
+        ingreso = true;
+      }
+    }
+
+    if (ingreso) { x = 0; } else x += 1;
+  }
+
+  /*
+    levelsLongestHeight = [120, 120, 110, 100, 100]
+    const maxHeight = levelsLongestHeight.reduce((a, e) => a + e.h + 10, 140);
+    index -> total subespaces.
+    index = platesByLevels.reduce((a, e) => a + e, 0);
+  */
+  const maxHeightKonva = levelsLongestHeight.reduce((a, e) => a + e + 10, 140);
+  let yLevel = maxHeightKonva;
+  let index = platesByLevels.reduce((a, e) => a + e, 0);
+  for (let i = 0; i < platesByLevels.length; i++) {
+    yLevel = yLevel - 10 - levelsLongestHeight[i];
+    let levelBefore = platesLevels[i - 1];
+    for (let [j, subSpace] of platesLevels[i].entries()) {
+      subSpace.y = yLevel;
+      drawSubSpace(index, subSpace, layer, levelBefore ? levelBefore[j*2] : null, levelBefore ? levelBefore[j*2 + 1] : null);
+      index -= 1;
+    }
+  }
+
+  let maxX = 0;
+  for (let i = 0; i < platesLevels.length; i++) {
+    let tempMaxX = platesLevels[i].reduce((max, current) => {
+      return current.x > max.x ? current : max;
+    });
+    maxX = maxX < tempMaxX.x ? tempMaxX.x : maxX;
   }
 
   let stage = new Konva.Stage({
     container: containerCanvaId,
-    width: window.innerWidth,
-    height: window.innerHeight
+    width: window.innerWidth < maxX ? maxX + 150 : window.innerWidth,
+    height: window.innerHeight < maxHeightKonva ? maxHeightKonva : window.innerHeight
   });
-
-  if (greaterPosY > window.innerHeight) {
-    stage.setAttrs({ height: greaterPosY + 100 });
-  }
 
   stage.add(layer);
 }
 ''')
-  konva_for_sub_file.close()
+    konva_for_sub_file.close()
 
 
 def write_gen_konva(iterations, c, report_folder):
-  '''Función para escribir función de generar el Konva de cada una de las iteraciones'''
-  
-  gen_konva = open(f'{report_folder}/web/js/gen_konva.js', 'w', encoding='utf-8')
+    '''Función para escribir función de generar el Konva de cada una de las iteraciones'''
 
-  gen_konva_func = '''
+    gen_konva = open(f'{report_folder}/web/js/gen_konva.js',
+                     'w', encoding='utf-8')
+
+    gen_konva_func = '''
   function generateKonvaStages() {
     let data_iterations = [\n'''
-  for i in range(iterations):
-    for j in range(2**c - 1):
-      gen_konva_func += f"['iteration_{i+1}_h_{j+1}_subspaces_canvas', data_iteration_vecino_h_{i+1}_{j+1}.cortes],\n"
-      gen_konva_func += f"['iteration_{i+1}_h_{j+1}_decode_canvas', data_iteration_vecino_h_{i+1}_{j+1}.subSpaces],\n"
-      gen_konva_func += f"['iteration_{i+1}_t_{j+1}_subspaces_canvas', data_iteration_vecino_t_{i+1}_{j+1}.cortes],\n"
-      gen_konva_func += f"['iteration_{i+1}_t_{j+1}_decode_canvas', data_iteration_vecino_t_{i+1}_{j+1}.subSpaces],\n"
+    for i in range(iterations):
+        for j in range(2**c - 1):
+            gen_konva_func += f"['iteration_{i+1}_h_{j+1}_subspaces_canvas', data_iteration_vecino_h_{i+1}_{j+1}.cortes],\n"
+            gen_konva_func += f"['iteration_{i+1}_h_{j+1}_decode_canvas', data_iteration_vecino_h_{i+1}_{j+1}.subSpaces],\n"
+            gen_konva_func += f"['iteration_{i+1}_t_{j+1}_subspaces_canvas', data_iteration_vecino_t_{i+1}_{j+1}.cortes],\n"
+            gen_konva_func += f"['iteration_{i+1}_t_{j+1}_decode_canvas', data_iteration_vecino_t_{i+1}_{j+1}.subSpaces],\n"
 
-  gen_konva_func += '''];
+    gen_konva_func += '''];
     for (let [containerCanvaId, data_iteration] of data_iterations) {
       if (containerCanvaId.includes('subspaces')) {
         konvaForSubSpaces(`${containerCanvaId}`, data_iteration);
@@ -384,15 +482,16 @@ def write_gen_konva(iterations, c, report_folder):
 
   generateKonvaStages();'''
 
-  gen_konva.writelines(gen_konva_func)
-  gen_konva.close()
+    gen_konva.writelines(gen_konva_func)
+    gen_konva.close()
 
 
 def write_gen_html_tags(iterations, c, report_folder):
-  '''Función para escribir función de cargar la información HTML de la página'''
+    '''Función para escribir función de cargar la información HTML de la página'''
 
-  gen_html_tags = open(f'{report_folder}/web/js/gen_html_tags.js', 'w', encoding='utf-8')
-  gen_html_tags.writelines('''
+    gen_html_tags = open(
+        f'{report_folder}/web/js/gen_html_tags.js', 'w', encoding='utf-8')
+    gen_html_tags.writelines('''
 function generateHtmlTags(iterations, c) {
   let sectionParent = document.getElementById('iterations');
   for (let i = 0; i < iterations; i++) {
@@ -475,14 +574,14 @@ function generateHtmlTags(iterations, c) {
   }
 }
 ''')
-  gen_html_tags.writelines(f'generateHtmlTags({iterations}, {c});')
-  gen_html_tags.close()
+    gen_html_tags.writelines(f'generateHtmlTags({iterations}, {c});')
+    gen_html_tags.close()
 
 
 def write_base_index(file: TextIOWrapper):
-  '''Escribe el archivo index.html base'''
+    '''Escribe el archivo index.html base'''
 
-  file.writelines('''
+    file.writelines('''
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -542,13 +641,13 @@ def write_base_index(file: TextIOWrapper):
     </section>
   </article>
 ''')
-  
+
+
 def write_base_styles_files(base_dir):
-  '''Función para escribir los archivos de CSS'''
+    '''Función para escribir los archivos de CSS'''
 
-
-  index_css_file = open(f'{base_dir}/index.css', 'w', encoding='utf-8')
-  index_css_file.writelines('''
+    index_css_file = open(f'{base_dir}/index.css', 'w', encoding='utf-8')
+    index_css_file.writelines('''
 * {
   margin: 0;
   border: 0;
@@ -665,10 +764,11 @@ article {
   width: 100% !important;
 }
 ''')
-  index_css_file.close()
+    index_css_file.close()
 
-  normalize_css_file = open(f'{base_dir}/normalize.css', 'w', encoding='utf-8')
-  normalize_css_file.writelines('''
+    normalize_css_file = open(
+        f'{base_dir}/normalize.css', 'w', encoding='utf-8')
+    normalize_css_file.writelines('''
 /*! normalize.css v8.0.1 | MIT License | github.com/necolas/normalize.css */
 
 /* Document
@@ -1019,4 +1119,4 @@ template {
   display: none;
 }
 ''')
-  normalize_css_file.close()
+    normalize_css_file.close()

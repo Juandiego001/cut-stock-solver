@@ -72,13 +72,13 @@ def hacer_corte(sub_esp: SubEs, T: int = 0, H: float = 0.0):
     ancho: int = sub_esp.ancho
     largo: int = sub_esp.largo
     if T == 0:  # Corte Horizontal -> Se modifica el largo
-        largo1: int = largo*(1-H)
-        largo2: int = largo*H
+        largo1: int = largo*H
+        largo2: int = largo*(1-H)
         sub_esp1: SubEs = SubEs(ancho, largo1)
         sub_esp2: SubEs = SubEs(ancho, largo2)
     else:  # Corte Vertical -> Se modifica el ancho
-        ancho1: int = ancho*(1-H)
-        ancho2: int = ancho*H
+        ancho1: int = ancho*H
+        ancho2: int = ancho*(1-H)
         sub_esp1: SubEs = SubEs(ancho1, largo)
         sub_esp2: SubEs = SubEs(ancho2, largo)
 
@@ -262,7 +262,7 @@ def sol_inicial(ancho_grande, largo_grande, c, items):
     '''Se agrega el item base como un subespacio inicial'''
     sub_inicial: SubEs = SubEs(ancho_grande, largo_grande)
     sub_esp1, sub_esp2 = hacer_corte(sub_inicial, s.T[0], s.H[0])
-    cortes = [{'h': sub_inicial.largo, 'w': sub_inicial.ancho, 'c': {'t': s.T[0], 'h': s.H[0]}}]
+    cortes = [{'h': sub_inicial.largo*100, 'w': sub_inicial.ancho*100, 'c': {'t': s.T[0], 'h': s.H[0]}}]
     cola = [sub_esp1, sub_esp2]
 
     '''Se generan subespacios con una copia de la solución con T y H generados'''
@@ -293,7 +293,7 @@ def generar_solucion_vecino(s: Solution, ancho_grande, largo_grande, c, items):
     '''Se agrega el item base como un subespacio inicial'''
     sub_inicial: SubEs = SubEs(ancho_grande, largo_grande)
     sub_esp1, sub_esp2 = hacer_corte(sub_inicial, s.T[0], s.H[0])
-    cortes = [{'h': sub_inicial.largo, 'w': sub_inicial.ancho, 'c': {'t': s.T[0], 'h': s.H[0]}}]
+    cortes = [{'h': sub_inicial.largo*100, 'w': sub_inicial.ancho*100, 'c': {'t': s.T[0], 'h': s.H[0]}}]
     cola = [sub_esp1, sub_esp2]
 
     '''Se generan subespacios con una copia de la solución con T y H generados'''

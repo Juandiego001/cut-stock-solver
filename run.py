@@ -281,7 +281,7 @@ def run_case(report_folder, case, with_reports=True):
             }
         }
 
-        # generate_reports(report_folder, data)
+        generate_reports(report_folder, data)
         generate_reports_web(report_folder, data)
 
 
