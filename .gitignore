@@ -3,3 +3,6 @@ venv
 cases
 reports
 __pycache__
+data.dat
+generate_data_ampl/tests
+*.exe
