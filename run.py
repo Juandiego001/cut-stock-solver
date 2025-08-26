@@ -5,21 +5,12 @@ from multiprocessing import Process
 from gen_reports_web import write_base_index, write_base_styles_files, write_final_index, write_gen_html_tags, write_gen_konva, write_konva_for_decode, write_konva_for_sub
 from main import sol_inicial, decode11, vecindario_t, vecindario_h
 from gen_reports_excel import create_sheets_summary, create_sheets_iterations, write_test_case, write_solution, write_iterations, write_iterations_summary
+from classes import Item
+
 
 # Definición de variables globales
 cases_dir = 'cases'
 c: int = 4
-
-
-class Item:
-    def __init__(self, id: int = 0, dem: int = 0, ancho: int = 0, largo: int = 0):  # Constructor
-        self.id = id
-        self.dem = dem
-        self.ancho = ancho
-        self.largo = largo
-
-    def __str__(self):
-        return f'Item #{self.id}: Ancho: {self.ancho} Largo: {self.largo} Demanda: {self.dem}'
 
 
 def lectura(case: str):

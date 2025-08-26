@@ -4,66 +4,7 @@ import math
 import random
 import numpy as np
 from scipy.stats import norm
-
-
-class ItemCapacidad:
-    def __init__(self, id: int = 0, capacidad: int = 0, area: int = 0):  # Constructor
-        self.id = id
-        self.capacidad = capacidad
-        self.area = area
-
-    def __str__(self):
-        return f'Item #{self.id}: Capacidad: {self.capacidad} Área: {self.area}'
-
-
-class SubEs:
-    def __init__(self, ancho: int = 0, largo: int = 0, items_capacidad: dict = {}):  # Constructor
-        self.ancho = ancho  # Ancho del subespacio
-        self.largo = largo  # Largo del subespacio
-        self.area_disponible = ancho*largo
-        # Capacidad de cada item dentro del subespacio
-        self.items_capacidad = {}
-
-    def __str__(self):
-        return f'Ancho: {self.ancho}\nLargo: {self.largo}\nÁrea disponible: {self.area_disponible}\n' +\
-            'Items capacidad:\n' +\
-            f'{"\n".join([f'Item #{id}: {val}' for id,
-                         val in self.items_capacidad.items()])}\n'
-
-
-class Solution:
-    def __init__(self):  # Constructor
-        self.T = []  # 0 -> Corte Horizontal, 1 -> Corte Vertial
-        self.H = []  # Decimal: Porcentaje de corte
-        self.v_sub = []  # Vector de subespacios
-        self.dem_com = {}  # Demanda completada
-        self.dem_fal = {}  # Demanda faltante
-        self.desperdicio = 0.0  # Desperdicio final
-        self.fitness = 0  # Puntuación de que tan buena es la solución
-        self.cortes = []  # Guardar los cortes de la solución para la representación gráfica
-
-    def __str__(self):
-        return f'''T: {self.T}
-H: {self.H}
-Subespacios:\n{'\n'.join([str(sub_es) for sub_es in self.v_sub])}
-Demanda completada: {self.dem_com}
-Demanda faltante: {self.dem_fal}
-Desperdicio: {self.desperdicio}
-Fitness: {self.fitness}
-'''
-    
-    def to_dict(self):
-        temp_sub_es = [{'id': i, 'h': (sub_es.largo)*100, 'w': (sub_es.ancho)*100, 'r': sub_es.items_capacidad} for i, sub_es in enumerate(self.v_sub)]
-        return {
-            't': self.T,
-            'h': self.H,
-            'subSpaces': temp_sub_es,
-            'demComp': self.dem_com,
-            'demFal': self.dem_fal,
-            'desperdicio': self.desperdicio,
-            'fitness': self.fitness,
-            'cortes': self.cortes + temp_sub_es
-        }
+from classes import Solution, SubEs, ItemCapacidad, Item
 
 
 def hacer_corte(sub_esp: SubEs, T: int = 0, H: float = 0.0):
@@ -85,7 +26,7 @@ def hacer_corte(sub_esp: SubEs, T: int = 0, H: float = 0.0):
     return sub_esp1, sub_esp2
 
 
-def generacion_subespacios(s: Solution, c: int, corte: int = 0, cola: list = [], cortes: list = []):
+def generacion_subespacios(s: Solution, c: int, corte: int = 0, cola: list[SubEs] = [], cortes: list = []):
     '''Función para generar los subespacios'''
 
     if len(cola) == 2**c:
@@ -97,7 +38,8 @@ def generacion_subespacios(s: Solution, c: int, corte: int = 0, cola: list = [],
             H: float = s.H[corte]
             sub_esp1, sub_esp2 = hacer_corte(sub_esp, T, H)
             corte += 1
-            cortes.append({'h': (sub_esp.largo)*100, 'w': (sub_esp.ancho)*100, 'c': { 't': T, 'h': H }})
+            cortes.append({'h': (sub_esp.largo)*100,
+                          'w': (sub_esp.ancho)*100, 'c': {'t': T, 'h': H}})
             copia_cola.append(sub_esp1)
             copia_cola.append(sub_esp2)
 
@@ -105,46 +47,282 @@ def generacion_subespacios(s: Solution, c: int, corte: int = 0, cola: list = [],
         return generacion_subespacios(s, c, corte, cola, cortes)
 
 
-def decode11(s: Solution, items):
+def recorrer_ancho(matriz: list[list], j: int, item: Item):
+    '''
+    Se recorre como tal cada fila de la matriz, es decir, k será cada elemento de 0's o 1's de la fila
+    '''
+
+    c = 0
+    ultimo_cero = -1
+    primer_cero = -1
+    ancho_completado = False
+
+    for i, k in enumerate(matriz[j]):
+        if k == 0 and primer_cero == -1:
+            primer_cero = (i, j)
+        if k == 0:
+            c += 1
+        if c == item.ancho:
+            ancho_completado = True
+            ultimo_cero = (i, j)
+            return ancho_completado, primer_cero, ultimo_cero
+
+    return ancho_completado, primer_cero, ultimo_cero
+
+
+def completar_x_ancho(matriz: list[list], primer_cero: tuple[int, int], ultimo_cero: tuple[int, int], ancho: int, largo: int):
+    '''
+    Se completa el item en el subespacio recorriendo x ancho a lo largo.
+
+    --->
+    [
+     xxx  |
+     xxx  |
+     xxx  v
+    ]
+    '''
+
+    largo_completado = False
+    largos_todos_completados = 0
+    for j in range(primer_cero[1] + 1, len(matriz)):
+        c = 0
+        for i, k in enumerate(matriz[j][primer_cero[0]:]):
+            '''
+            Si en el proceso de rellenado de la segunda fase se llega a encontrar un 1, no se puede completar la figura con
+            la base establecida y se debe continuar con otra posición de ancho/base.
+            '''
+            if k != 0:
+                largo_completado = False
+                return largo_completado, ultimo_cero
+            c += 1
+            if c == ancho:
+                largos_todos_completados += 1
+                ultimo_cero = (i + primer_cero[0], j)
+                break
+
+        if largos_todos_completados == largo - 1:
+            largo_completado = True
+            return largo_completado, ultimo_cero
+
+    return largo_completado, ultimo_cero
+
+
+def ubicar_x_dimension(matriz: list[list], j: int, item: Item, dimension: int):
+    '''
+    Ubicar ya sea por largo o por ancho.
+    dimension = 0 -> x ancho.
+    dimension = 1 -> x largo.
+    '''
+
+    c = 0
+    completado = False
+    primer_cero = -1
+    ultimo_cero = -1
+
+    for i, k in enumerate(matriz[j]):
+        if k == 0 and primer_cero == -1:
+            primer_cero = (i, j)
+        if k == 0:
+            c += 1
+        if (dimension == 0 and c == item.ancho) or (dimension == 1 and c == item.largo):
+            completado = True
+            ultimo_cero = (i, j)
+            return completado, primer_cero, ultimo_cero
+
+    return completado, primer_cero, ultimo_cero
+
+
+def decode11(s: Solution, items: list[Item]):
     '''Función para decodificar las soluciones 1 - 1'''
 
     for sub_esp in s.v_sub:
         ancho: int = sub_esp.ancho
         largo: int = sub_esp.largo
-        area_disponible: int = ancho*largo
-        items_capacidad: list[ItemCapacidad] = []
 
-        '''Se calcula la capacidad por cada item'''
-        for item in items:
-            area_item: int = item.ancho * item.largo  # Ai: Área del item
-            area_entera: int = math.floor(area_disponible / area_item)
-            demanda = s.dem_fal[item.id]
-            # Se determina el mínimmo entre el área de parte entera y la demanda
-            capacidad: int = area_entera if area_entera < demanda else demanda
-            items_capacidad.append(ItemCapacidad(
-                item.id, capacidad, area_item))
+        # Se aproxima al entero más cercano
+        new_ancho = math.floor(ancho)
+        new_largo = math.floor(largo)
 
-        '''Se ordena de mayor a menor capacidad'''
-        items_capacidad = sorted(
-            items_capacidad, key=lambda ic: ic.capacidad, reverse=True)
+        # Se crea la matriz con base en el ancho y largo definidos
+        matriz = [[0 for _ in range(new_ancho)] for _ in range(new_largo)]
 
-        '''Se recorre la lista de items ordenados por capacidad'''
-        for item in items_capacidad:
-            area_entera: int = math.floor(area_disponible / item.area)
-            demanda = s.dem_fal[item.id]
-            capacidad: int = area_entera if area_entera < demanda else demanda
-            s.dem_fal[item.id] -= capacidad
-            area_disponible -= item.area*capacidad
-            s.dem_com[item.id] += capacidad
-            sub_esp.items_capacidad[item.id] += capacidad
+        # Se determina el desperdicio inicial
+        desp_ancho = round(ancho - new_ancho, 4)
+        desp_largo = round(largo - new_largo, 4)
 
-        sub_esp.area_disponible = area_disponible
+        sorted_items = sorted(
+            items, key=lambda i: i.ancho*i.largo, reverse=True)
+
+        for item in sorted_items:
+            '''
+            ¿Ancho es igual al largo?
+            '''
+            ancho_eq_largo = item.ancho == item.largo
+
+            '''
+            Recorrer cada item por su demanda faltante
+            '''
+            for i in range(s.dem_fal[item.id]):
+                '''
+                ¿Se debe incluir el item en el subespacio?
+                '''
+                incluir_item = False
+
+                # Si ancho es igual al largo, la validación es normal y no se debe
+                # validar por ambos lados.
+                if ancho_eq_largo:
+                    '''
+                    Fase inicial.
+                    Se determina primero la ubicación del ancho base del item.
+                    '''
+                    for j in range(len(matriz)):
+                        ancho_completado, primer_cero, ultimo_cero = recorrer_ancho(
+                            matriz, j, item)
+
+                        '''
+                        Si no se logró establecer el ancho, se debe continuar buscando en otras filas de la matriz
+                        '''
+                        if not ancho_completado:
+                            continue
+
+                        '''
+                        Validación de si el item es de largo 1.
+                        Si el item es de largo 1 y el ancho ya fue completado, entonces el item puede ser incluido en el subespacio.
+                        '''
+                        if item.largo == 1:
+                            incluir_item = True
+                            s.dem_com[item.id] += 1
+                            sub_esp.items_capacidad[item.id] += 1
+                            s.dem_fal[item.id] -= 1
+                            break
+
+                        '''
+                        Fase posterior.
+                        Se rellena el item. Se completa el item para verificar si es posible ubicarlo.
+                        Validación inicial. len(matriz) - (j + 1) >= largo_item
+                        '''
+                        largo_permitido = len(matriz) - primer_cero[1]
+                        '''
+                        No se puede completar el item, continuar con el siguiente
+                        '''
+                        if largo_permitido < item.largo:
+                            break
+
+                        largo_completado, ultimo_cero = completar_x_ancho(
+                            matriz, primer_cero, ultimo_cero, item.ancho, item.largo)
+
+                        if largo_completado and ancho_completado:
+                            incluir_item = True
+                            s.dem_com[item.id] += 1
+                            sub_esp.items_capacidad[item.id] += 1
+                            s.dem_fal[item.id] -= 1
+                            break
+
+                # Si ancho es igual al largo, la validación es normal y no se debe
+                # validar por ambos lados.
+                else:
+                    '''
+                    Fase inicial.
+                    Se intenta colocar por ancho el item.
+                    '''
+                    for j in range(len(matriz)):
+                        largo_completado = False
+                        ancho_completado, primer_cero, ultimo_cero = ubicar_x_dimension(
+                            matriz, j, item, 0)
+                        if ancho_completado:
+                            '''
+                            Validación de si el item es de largo 1.
+                            Si el item es de largo 1 y el ancho ya fue completado, entonces el item puede ser incluido en el subespacio.
+                            '''
+                            if item.largo == 1:
+                              incluir_item = True
+                              s.dem_com[item.id] += 1
+                              sub_esp.items_capacidad[item.id] += 1
+                              s.dem_fal[item.id] -= 1
+                              break
+                        
+                            '''
+                            Fase posterior.
+                            Se rellena el item. Se completa el item para verificar si es posible ubicarlo.
+                            Validación inicial. len(matriz) - (j + 1) >= largo_item
+                            '''
+                            largo_permitido = len(
+                                matriz) - primer_cero[1]
+                            '''
+                            No se puede completar el item, continuar con el siguiente
+                            '''
+                            if largo_permitido < item.largo:
+                                break
+
+                            largo_completado, ultimo_cero = completar_x_ancho(
+                                matriz, primer_cero, ultimo_cero, item.ancho, item.largo)
+
+                        if largo_completado and ancho_completado:
+                            incluir_item = True
+                            s.dem_com[item.id] += 1
+                            sub_esp.items_capacidad[item.id] += 1
+                            s.dem_fal[item.id] -= 1
+                            break
+
+                        largo_completado, primer_cero, ultimo_cero = ubicar_x_dimension(
+                            matriz, j, item, 1)
+                        if largo_completado:
+                            '''
+                            Validación de si el item es de ancho 1.
+                            Si el item es de ancho 1 y el largo ya fue completado, entonces el item puede ser incluido en el subespacio.
+                            '''
+                            if item.ancho == 1:
+                              incluir_item = True
+                              s.dem_com[item.id] += 1
+                              sub_esp.items_capacidad[item.id] += 1
+                              s.dem_fal[item.id] -= 1
+                              break
+
+                            '''
+                            Fase posterior.
+                            Se rellena el item. Se completa el item para verificar si es posible ubicarlo.
+                            Validación inicial. len(matriz) - (j + 1) >= largo_item
+                            '''
+                            largo_permitido = len(
+                                matriz) - (primer_cero[1] + 1)
+                            '''
+                            No se puede completar el item, continuar con el siguiente
+                            '''
+                            if largo_permitido < item.ancho:
+                                break
+                            ancho_completado, ultimo_cero = completar_x_ancho(
+                                matriz, primer_cero, ultimo_cero, item.largo, item.ancho)
+
+                        if largo_completado and ancho_completado:
+                            incluir_item = True
+                            s.dem_com[item.id] += 1
+                            sub_esp.items_capacidad[item.id] += 1
+                            s.dem_fal[item.id] -= 1
+                            break
+
+                '''
+                Proceso para incluir el item
+                '''
+                if incluir_item:
+                    for j in range(primer_cero[1], ultimo_cero[1] + 1):
+                        for k in range(primer_cero[0], ultimo_cero[0] + 1):
+                            matriz[j][k] = item
+
+        # Se calcula el desperdicio final
+        desp_final = 0
+        for j in matriz:
+            for k in j:
+                if type(k) == int:
+                    desp_final += 1
+
+        # Se suman esos desperdicios de largo y ancho iniciales
+        sub_esp.area_disponible = desp_final + desp_ancho + desp_largo
+        sub_esp.matriz = matriz
 
     '''Se calcula el desperdicio como el área disponible de cada subespacio'''
     '''El desperdicio se suma solamente si el subespacio fue utilizado para satisfacer la demanda de un item'''
     for sub_es in s.v_sub:
         s.desperdicio += sub_es.area_disponible
-        # if sum(sub_es.items_capacidad.values()) > 0:
 
     '''Se calcula el fitness como la suma del desperdicio + una constante por la demanda faltante'''
     s.fitness = s.desperdicio + 2 * \
@@ -158,7 +336,7 @@ def print_list(the_list: list):
         print(str(each_element))
 
 
-def decode12(s: Solution, c, items):
+def decode12(s: Solution, c, items: list[Item]):
     '''Función para decodificar las soluciones 1 - 2'''
 
     aux_v_sub = aux_items = 0
@@ -225,7 +403,6 @@ def decode12(s: Solution, c, items):
     '''El desperdicio se suma solamente si el subespacio fue utilizado para satisfacer la demanda de un item'''
     for sub_es in s.v_sub:
         s.desperdicio += sub_es.area_disponible
-        # if sum(sub_es.items_capacidad.values()) > 0:
 
     '''Se calcula el fitness como la suma del desperdicio + una constante por la demanda faltante'''
     s.fitness = s.desperdicio + 2 * \
@@ -246,7 +423,7 @@ def generate_h_value():
     return H
 
 
-def sol_inicial(ancho_grande, largo_grande, c, items):
+def sol_inicial(ancho_grande, largo_grande, c, items: list[Item]):
     '''Definición de solución inicial'''
 
     s = Solution()
@@ -262,11 +439,13 @@ def sol_inicial(ancho_grande, largo_grande, c, items):
     '''Se agrega el item base como un subespacio inicial'''
     sub_inicial: SubEs = SubEs(ancho_grande, largo_grande)
     sub_esp1, sub_esp2 = hacer_corte(sub_inicial, s.T[0], s.H[0])
-    cortes = [{'h': sub_inicial.largo*100, 'w': sub_inicial.ancho*100, 'c': {'t': s.T[0], 'h': s.H[0]}}]
+    cortes = [{'h': sub_inicial.largo*100, 'w': sub_inicial.ancho *
+               100, 'c': {'t': s.T[0], 'h': s.H[0]}}]
     cola = [sub_esp1, sub_esp2]
 
     '''Se generan subespacios con una copia de la solución con T y H generados'''
-    s.v_sub, cortes = generacion_subespacios(copy.deepcopy(s), c, 1, cola, cortes)
+    s.v_sub, cortes = generacion_subespacios(
+        copy.deepcopy(s), c, 1, cola, cortes)
 
     '''Se asignan los cortes realizados a la solución para el reporte web'''
     s.cortes = cortes
@@ -282,7 +461,7 @@ def sol_inicial(ancho_grande, largo_grande, c, items):
     return s
 
 
-def generar_solucion_vecino(s: Solution, ancho_grande, largo_grande, c, items):
+def generar_solucion_vecino(s: Solution, ancho_grande, largo_grande, c, items: list[Item]):
     '''Función para generar la solución vecino'''
 
     '''Vector iniciales de demandas completadas y faltantes'''
@@ -293,11 +472,13 @@ def generar_solucion_vecino(s: Solution, ancho_grande, largo_grande, c, items):
     '''Se agrega el item base como un subespacio inicial'''
     sub_inicial: SubEs = SubEs(ancho_grande, largo_grande)
     sub_esp1, sub_esp2 = hacer_corte(sub_inicial, s.T[0], s.H[0])
-    cortes = [{'h': sub_inicial.largo*100, 'w': sub_inicial.ancho*100, 'c': {'t': s.T[0], 'h': s.H[0]}}]
+    cortes = [{'h': sub_inicial.largo*100, 'w': sub_inicial.ancho *
+               100, 'c': {'t': s.T[0], 'h': s.H[0]}}]
     cola = [sub_esp1, sub_esp2]
 
     '''Se generan subespacios con una copia de la solución con T y H generados'''
-    s.v_sub, cortes = generacion_subespacios(copy.deepcopy(s), c, 1, cola, cortes)
+    s.v_sub, cortes = generacion_subespacios(
+        copy.deepcopy(s), c, 1, cola, cortes)
 
     '''Se asignan los cortes realizados a la solución para el reporte web'''
     s.cortes = cortes
@@ -315,7 +496,7 @@ def generar_solucion_vecino(s: Solution, ancho_grande, largo_grande, c, items):
     return s
 
 
-def vecindario_t(s: Solution, ancho_grande, largo_grande, c, items):
+def vecindario_t(s: Solution, ancho_grande, largo_grande, c, items: list[Item]):
     '''Crear un vecino basandose en el vector T'''
 
     best_fitness = sys.maxsize
@@ -328,7 +509,8 @@ def vecindario_t(s: Solution, ancho_grande, largo_grande, c, items):
         vector_t[i] = 0 if s.T[i] == 1 else 1
 
         s_copy.T = vector_t
-        s_vecino = generar_solucion_vecino(s_copy, ancho_grande, largo_grande, c, items)
+        s_vecino = generar_solucion_vecino(
+            s_copy, ancho_grande, largo_grande, c, items)
         decode11(s_vecino, items)
         vecinos.append(copy.deepcopy(s_vecino))
 
@@ -340,7 +522,7 @@ def vecindario_t(s: Solution, ancho_grande, largo_grande, c, items):
     return s_mejor, vecinos
 
 
-def vecindario_h(s: Solution, ancho_grande, largo_grande, c, items):
+def vecindario_h(s: Solution, ancho_grande, largo_grande, c, items: list[Item]):
     '''Crear un vecino basandose en el vector H'''
 
     best_fitness = sys.maxsize
@@ -366,7 +548,8 @@ def vecindario_h(s: Solution, ancho_grande, largo_grande, c, items):
                 vector_h[i] = temp_h
 
         s_copy.H = vector_h
-        s_vecino = generar_solucion_vecino(s_copy, ancho_grande, largo_grande, c, items)
+        s_vecino = generar_solucion_vecino(
+            s_copy, ancho_grande, largo_grande, c, items)
         decode11(s_vecino, items)
         vecinos.append(copy.deepcopy(s_vecino))
 
