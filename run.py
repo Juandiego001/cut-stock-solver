@@ -2,7 +2,7 @@ import os
 import copy
 from datetime import datetime
 from multiprocessing import Process
-from gen_reports_web import write_base_index, write_base_styles_files, write_final_index, write_gen_html_tags, write_gen_konva, write_konva_for_decode, write_konva_for_sub
+from gen_reports_web import write_base_index, write_base_styles_files, write_final_index, write_gen_html_tags, write_gen_konva, write_konva_for_sub_subspaces, write_konva_for_sub_cuts, write_konva_for_sub_matrix, write_iterations_objects
 from main import sol_inicial, decode11, vecindario_t, vecindario_h
 from gen_reports_excel import create_sheets_summary, create_sheets_iterations, write_test_case, write_solution, write_iterations, write_iterations_summary
 from classes import Item
@@ -129,9 +129,11 @@ def generate_reports_web(report_folder, data):
     
     '''Escribir los Javascript generadores del contenido de la página'''
     write_gen_html_tags(iterations['count'], c, report_folder)
-    write_konva_for_sub(report_folder)
-    write_konva_for_decode(report_folder)
-    write_gen_konva(iterations['count'], c, report_folder)
+    write_iterations_objects(iterations['count'], c, report_folder)
+    write_konva_for_sub_cuts(report_folder)
+    write_konva_for_sub_subspaces(report_folder)
+    write_konva_for_sub_matrix(report_folder)
+    write_gen_konva(report_folder)
 
     '''Escribir la parte final del archivo index.html'''
     index_html_file = open(f'{report_folder}/web/index.html', 'a', encoding='utf-8')

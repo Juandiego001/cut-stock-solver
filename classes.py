@@ -26,7 +26,7 @@ class SubEs:
         self.area_disponible = ancho*largo
         # Capacidad de cada item dentro del subespacio
         self.items_capacidad = {}
-        self.matriz = [] # Matriz final de ubicación de cada item
+        self.matrix = [] # Matriz final de ubicación de cada item
 
     def __str__(self):
         return f'Ancho: {self.ancho}\nLargo: {self.largo}\nÁrea disponible: {self.area_disponible}\n' +\
@@ -58,7 +58,7 @@ Fitness: {self.fitness}
 
     def to_dict(self):
         temp_sub_es = [{'id': i, 'h': (sub_es.largo)*100, 'w': (sub_es.ancho)*100,
-                        'r': sub_es.items_capacidad} for i, sub_es in enumerate(self.v_sub)]
+                        'r': sub_es.items_capacidad, 'matrix': [[0 if i == 0 else i.id for i in j] for j in sub_es.matrix]} for i, sub_es in enumerate(self.v_sub)]
         return {
             't': self.T,
             'h': self.H,

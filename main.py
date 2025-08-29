@@ -47,9 +47,9 @@ def generacion_subespacios(s: Solution, c: int, corte: int = 0, cola: list[SubEs
         return generacion_subespacios(s, c, corte, cola, cortes)
 
 
-def recorrer_ancho(matriz: list[list], j: int, item: Item):
+def recorrer_ancho(matrix: list[list], j: int, item: Item):
     '''
-    Se recorre como tal cada fila de la matriz, es decir, k será cada elemento de 0's o 1's de la fila
+    Se recorre como tal cada fila de la matrix, es decir, k será cada elemento de 0's o 1's de la fila
     '''
 
     c = 0
@@ -57,7 +57,11 @@ def recorrer_ancho(matriz: list[list], j: int, item: Item):
     primer_cero = -1
     ancho_completado = False
 
-    for i, k in enumerate(matriz[j]):
+    for i, k in enumerate(matrix[j]):
+        if k != 0:
+            primer_cero = -1
+            c = 0
+            continue
         if k == 0 and primer_cero == -1:
             primer_cero = (i, j)
         if k == 0:
@@ -70,7 +74,7 @@ def recorrer_ancho(matriz: list[list], j: int, item: Item):
     return ancho_completado, primer_cero, ultimo_cero
 
 
-def completar_x_ancho(matriz: list[list], primer_cero: tuple[int, int], ultimo_cero: tuple[int, int], ancho: int, largo: int):
+def completar_x_ancho(matrix: list[list], primer_cero: tuple[int, int], ultimo_cero: tuple[int, int], ancho: int, largo: int):
     '''
     Se completa el item en el subespacio recorriendo x ancho a lo largo.
 
@@ -84,9 +88,9 @@ def completar_x_ancho(matriz: list[list], primer_cero: tuple[int, int], ultimo_c
 
     largo_completado = False
     largos_todos_completados = 0
-    for j in range(primer_cero[1] + 1, len(matriz)):
+    for j in range(primer_cero[1] + 1, len(matrix)):
         c = 0
-        for i, k in enumerate(matriz[j][primer_cero[0]:]):
+        for i, k in enumerate(matrix[j][primer_cero[0]:]):
             '''
             Si en el proceso de rellenado de la segunda fase se llega a encontrar un 1, no se puede completar la figura con
             la base establecida y se debe continuar con otra posición de ancho/base.
@@ -107,7 +111,7 @@ def completar_x_ancho(matriz: list[list], primer_cero: tuple[int, int], ultimo_c
     return largo_completado, ultimo_cero
 
 
-def ubicar_x_dimension(matriz: list[list], j: int, item: Item, dimension: int):
+def ubicar_x_dimension(matrix: list[list], j: int, item: Item, dimension: int):
     '''
     Ubicar ya sea por largo o por ancho.
     dimension = 0 -> x ancho.
@@ -119,7 +123,11 @@ def ubicar_x_dimension(matriz: list[list], j: int, item: Item, dimension: int):
     primer_cero = -1
     ultimo_cero = -1
 
-    for i, k in enumerate(matriz[j]):
+    for i, k in enumerate(matrix[j]):
+        if k != 0:
+            primer_cero = -1
+            c = 0
+            continue
         if k == 0 and primer_cero == -1:
             primer_cero = (i, j)
         if k == 0:
@@ -144,7 +152,7 @@ def decode11(s: Solution, items: list[Item]):
         new_largo = math.floor(largo)
 
         # Se crea la matriz con base en el ancho y largo definidos
-        matriz = [[0 for _ in range(new_ancho)] for _ in range(new_largo)]
+        matrix = [[0 for _ in range(new_ancho)] for _ in range(new_largo)]
 
         # Se determina el desperdicio inicial
         desp_ancho = round(ancho - new_ancho, 4)
@@ -175,9 +183,9 @@ def decode11(s: Solution, items: list[Item]):
                     Fase inicial.
                     Se determina primero la ubicación del ancho base del item.
                     '''
-                    for j in range(len(matriz)):
+                    for j in range(len(matrix)):
                         ancho_completado, primer_cero, ultimo_cero = recorrer_ancho(
-                            matriz, j, item)
+                            matrix, j, item)
 
                         '''
                         Si no se logró establecer el ancho, se debe continuar buscando en otras filas de la matriz
@@ -201,7 +209,7 @@ def decode11(s: Solution, items: list[Item]):
                         Se rellena el item. Se completa el item para verificar si es posible ubicarlo.
                         Validación inicial. len(matriz) - (j + 1) >= largo_item
                         '''
-                        largo_permitido = len(matriz) - primer_cero[1]
+                        largo_permitido = len(matrix) - primer_cero[1]
                         '''
                         No se puede completar el item, continuar con el siguiente
                         '''
@@ -209,7 +217,7 @@ def decode11(s: Solution, items: list[Item]):
                             break
 
                         largo_completado, ultimo_cero = completar_x_ancho(
-                            matriz, primer_cero, ultimo_cero, item.ancho, item.largo)
+                            matrix, primer_cero, ultimo_cero, item.ancho, item.largo)
 
                         if largo_completado and ancho_completado:
                             incluir_item = True
@@ -225,10 +233,10 @@ def decode11(s: Solution, items: list[Item]):
                     Fase inicial.
                     Se intenta colocar por ancho el item.
                     '''
-                    for j in range(len(matriz)):
+                    for j in range(len(matrix)):
                         largo_completado = False
                         ancho_completado, primer_cero, ultimo_cero = ubicar_x_dimension(
-                            matriz, j, item, 0)
+                            matrix, j, item, 0)
                         if ancho_completado:
                             '''
                             Validación de si el item es de largo 1.
@@ -247,7 +255,7 @@ def decode11(s: Solution, items: list[Item]):
                             Validación inicial. len(matriz) - (j + 1) >= largo_item
                             '''
                             largo_permitido = len(
-                                matriz) - primer_cero[1]
+                                matrix) - primer_cero[1]
                             '''
                             No se puede completar el item, continuar con el siguiente
                             '''
@@ -255,7 +263,7 @@ def decode11(s: Solution, items: list[Item]):
                                 break
 
                             largo_completado, ultimo_cero = completar_x_ancho(
-                                matriz, primer_cero, ultimo_cero, item.ancho, item.largo)
+                                matrix, primer_cero, ultimo_cero, item.ancho, item.largo)
 
                         if largo_completado and ancho_completado:
                             incluir_item = True
@@ -265,7 +273,7 @@ def decode11(s: Solution, items: list[Item]):
                             break
 
                         largo_completado, primer_cero, ultimo_cero = ubicar_x_dimension(
-                            matriz, j, item, 1)
+                            matrix, j, item, 1)
                         if largo_completado:
                             '''
                             Validación de si el item es de ancho 1.
@@ -284,14 +292,14 @@ def decode11(s: Solution, items: list[Item]):
                             Validación inicial. len(matriz) - (j + 1) >= largo_item
                             '''
                             largo_permitido = len(
-                                matriz) - (primer_cero[1] + 1)
+                                matrix) - (primer_cero[1] + 1)
                             '''
                             No se puede completar el item, continuar con el siguiente
                             '''
                             if largo_permitido < item.ancho:
                                 break
                             ancho_completado, ultimo_cero = completar_x_ancho(
-                                matriz, primer_cero, ultimo_cero, item.largo, item.ancho)
+                                matrix, primer_cero, ultimo_cero, item.largo, item.ancho)
 
                         if largo_completado and ancho_completado:
                             incluir_item = True
@@ -306,18 +314,18 @@ def decode11(s: Solution, items: list[Item]):
                 if incluir_item:
                     for j in range(primer_cero[1], ultimo_cero[1] + 1):
                         for k in range(primer_cero[0], ultimo_cero[0] + 1):
-                            matriz[j][k] = item
+                            matrix[j][k] = item
 
         # Se calcula el desperdicio final
         desp_final = 0
-        for j in matriz:
+        for j in matrix:
             for k in j:
                 if type(k) == int:
                     desp_final += 1
 
         # Se suman esos desperdicios de largo y ancho iniciales
         sub_esp.area_disponible = desp_final + desp_ancho + desp_largo
-        sub_esp.matriz = matriz
+        sub_esp.matrix = matrix
 
     '''Se calcula el desperdicio como el área disponible de cada subespacio'''
     '''El desperdicio se suma solamente si el subespacio fue utilizado para satisfacer la demanda de un item'''

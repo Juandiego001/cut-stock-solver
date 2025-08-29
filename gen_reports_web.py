@@ -16,9 +16,11 @@ def write_final_index(iterations, file: TextIOWrapper):
         script_tags += f'<script src="js/iterations/{i+1}_t.js"></script>\n'
 
     script_tags += '''
-<script src="js/konva_for_sub_decode.js"></script>
-<script src="js/konva_for_sub_spaces.js"></script>
+<script src="js/konva_for_sub_cuts.js"></script>
+<script src="js/konva_for_sub_matrix.js"></script>
+<script src="js/konva_for_sub_subspaces.js"></script>
 <script src="js/gen_html_tags.js"></script>
+<script src="js/iterations_objects.js"></script>
 <script src="js/gen_konva.js"></script>
 '''
 
@@ -30,13 +32,13 @@ def write_final_index(iterations, file: TextIOWrapper):
     file.writelines(final_part)
 
 
-def write_konva_for_decode(report_folder):
+def write_konva_for_sub_subspaces(report_folder):
     '''Función para escribir una función que permita dibujar el Konva del decode'''
 
-    konva_for_decode_file = open(
-        f'{report_folder}/web/js/konva_for_sub_decode.js', 'w', encoding='utf-8')
-    konva_for_decode_file.writelines('''
-function konvaForDecode(containerCanvaId, subSpaces) {
+    konva_for_sub_subspaces_file = open(
+        f'{report_folder}/web/js/konva_for_sub_subspaces.js', 'w', encoding='utf-8')
+    konva_for_sub_subspaces_file.writelines('''
+function konvaForSubspaces(containerCanvaId, subSpaces) {
   let layer = new Konva.Layer();
 
   let maxWidth = Math.max(...subSpaces.map(e => e.w)) + 20;
@@ -217,15 +219,15 @@ function konvaForDecode(containerCanvaId, subSpaces) {
 
   stage.add(layer);
 }''')
-    konva_for_decode_file.close()
+    konva_for_sub_subspaces_file.close()
 
 
-def write_konva_for_sub(report_folder):
+def write_konva_for_sub_cuts(report_folder):
     '''Función para escribir una función de dibujar el Konva cada que se envíe una data y un conteinerCanvasId'''
 
-    konva_for_sub_file = open(
-        f'{report_folder}/web/js/konva_for_sub_spaces.js', 'w', encoding='utf-8')
-    konva_for_sub_file.writelines('''
+    konva_for_sub_cuts_file = open(
+        f'{report_folder}/web/js/konva_for_sub_cuts.js', 'w', encoding='utf-8')
+    konva_for_sub_cuts_file.writelines('''
 function drawSubSpace(i, subSpace, layer, children1, children2) {  
   let width = subSpace.w;
   let height = subSpace.h;
@@ -331,7 +333,7 @@ H: ${subSpace['c'].h}`;
   }
 }
 
-function konvaForSubSpaces(containerCanvaId, data) {
+function konvaForCuts(containerCanvaId, data) {
   let layer = new Konva.Layer();
 
   const platesByLevels = [16, 8, 4, 2, 1];
@@ -451,40 +453,134 @@ function konvaForSubSpaces(containerCanvaId, data) {
   stage.add(layer);
 }
 ''')
-    konva_for_sub_file.close()
+    konva_for_sub_cuts_file.close()
 
 
-def write_gen_konva(iterations, c, report_folder):
+def write_konva_for_sub_matrix(report_folder):
+    '''Función para escribir función de generar el Konva de la matriz de cada subespacio'''
+    
+    konva_for_sub_matrix_file = open(f'{report_folder}/web/js/konva_for_sub_matrix.js',
+                     'w', encoding='utf-8')
+    
+    konva_for_sub_matrix = '''function drawSubspaceMatrix (containerId, subSpaceWidth, subSpaceHeight, matrix) {
+  let colores = [
+    "#FADADD",
+    "#FFC0CB",
+    "#F0F8FF",
+    "#B0E0E6",
+    "#ADD8E6",
+    "#F0FFF0",
+    "#98FB98",
+    "#E0FFFF",
+    "#B7F0E7",
+    "#FFFACD",
+    "#FFEFD5",
+    "#FAEBD7",
+    "#FFF8DC",
+    "#F5F5DC",
+    "#FFDAB9",
+    "#FFE4C4",
+    "#EE82EE",
+    "#DDA0DD",
+    "#E6E6FA",
+    "#D8BFD8",
+  ];
+
+  const stage = new Konva.Stage({
+    container: containerId, // id of container <div>
+    width: window.innerWidth > subSpaceWidth + 40 ? window.innerWidth : subSpaceWidth + 40,
+    height: subSpaceHeight + 40,
+  });
+
+  const layer = new Konva.Layer();
+
+  // Primero se dibuja el subespacio
+  const rect1 = new Konva.Rect({
+    x: 20,
+    y: 20,
+    width: subSpaceWidth,
+    height: subSpaceHeight,
+    fill: "gray",
+  });
+
+  layer.add(rect1);
+
+  let posYInicial = 20;
+  let indexColor = -1;
+  let selectColor = {};
+  let theColor = '';
+
+  for (let row of matrix) {
+    let posXInicial = 20;
+    for (let [i, e] of row.entries()) {
+      if (e !== 0) {
+        if (selectColor[e]) theColor = selectColor[e];
+        else {
+          indexColor++;
+          theColor = selectColor[e] = colores[indexColor];
+        }
+        const rectPos = new Konva.Rect({
+           x: posXInicial,
+           y: posYInicial,
+           width: 100,
+           height: 100,
+           fill: theColor,
+         });
+         layer.add(rectPos);
+         posXInicial += 100;
+      }
+    }
+    posYInicial += 100;
+  }
+
+  stage.add(layer);
+};
+
+function drawSubspaceTableMatrix(containerTable, matrix) {
+  const tableElement = document.createElement('table');
+
+  for (let j of matrix) {
+    const trElement = document.createElement('tr');
+    for (let i of j) {
+      const tdElement = document.createElement('td');
+      tdElement.innerHTML = i;
+      trElement.appendChild(tdElement);
+    }
+    tableElement.appendChild(trElement);
+  }
+
+  document.getElementById(containerTable).innerHTML = '';
+  document.getElementById(containerTable).appendChild(tableElement);
+}
+
+function konvaForMatrix(iterationId) {
+  let containerCanvas = `${iterationId}_matrix_canvas`;
+  let containerTable = `${iterationId}_container_table`;
+  let subSpaceNeeded = document.getElementById(`${iterationId}_select`).value;
+  const subSpace = dataIterationsSubspaces[
+    `${iterationId}_subspaces_canvas`
+  ].find((e) => e.id === parseInt(subSpaceNeeded));
+  console.log({ subSpace });
+  drawSubspaceTableMatrix(containerTable, subSpace.matrix);
+  drawSubspaceMatrix(containerCanvas, subSpace.w, subSpace.h, subSpace.matrix);
+}
+    '''
+
+    konva_for_sub_matrix_file.writelines(konva_for_sub_matrix)
+    konva_for_sub_matrix_file.close()
+
+
+def write_gen_konva(report_folder):
     '''Función para escribir función de generar el Konva de cada una de las iteraciones'''
 
     gen_konva = open(f'{report_folder}/web/js/gen_konva.js',
                      'w', encoding='utf-8')
 
-    gen_konva_func = '''
-  function generateKonvaStages(containerCanvaId) {
-
-    let dataIterationsSubspaces = {\n'''
-
-    for i in range(iterations):
-        for j in range(2**c - 1):
-            gen_konva_func += f"\t'iteration_{i+1}_h_{j+1}_subspaces_canvas': data_iteration_vecino_h_{i+1}_{j+1}.cortes,\n"
-            gen_konva_func += f"\t'iteration_{i+1}_t_{j+1}_subspaces_canvas': data_iteration_vecino_t_{i+1}_{j+1}.cortes,\n"
-
-    gen_konva_func += '''};
-    
-    let dataIterationsDecode = {\n'''
-
-    for i in range(iterations):
-        for j in range(2**c - 1):
-                gen_konva_func += f"\t'iteration_{i+1}_h_{j+1}_decode_canvas': data_iteration_vecino_h_{i+1}_{j+1}.subSpaces,\n"
-                gen_konva_func += f"\t'iteration_{i+1}_t_{j+1}_decode_canvas': data_iteration_vecino_t_{i+1}_{j+1}.subSpaces,\n"
-
-    gen_konva_func += '''};
-    
-    if (containerCanvaId.includes('subspaces')) {
-      konvaForSubSpaces(`${containerCanvaId}`, dataIterationsSubspaces[containerCanvaId]);
+    gen_konva_func = '''function generateKonvaStages(containerCanvaId) {
+    if (containerCanvaId.includes('cuts')) {
+      konvaForCuts(`${containerCanvaId}`, dataIterationsCuts[containerCanvaId]);
     } else {
-      konvaForDecode(`${containerCanvaId}`, dataIterationsDecode[containerCanvaId]);
+      konvaForSubspaces(`${containerCanvaId}`, dataIterationsSubspaces[containerCanvaId]);
     }
   }
   '''
@@ -498,8 +594,7 @@ def write_gen_html_tags(iterations, c, report_folder):
 
     gen_html_tags = open(
         f'{report_folder}/web/js/gen_html_tags.js', 'w', encoding='utf-8')
-    gen_html_tags.writelines('''
-function generateHtmlTags(iterations, c) {
+    gen_html_tags.writelines('''function generateHtmlTags(iterations, c) {
   let sectionParent = document.getElementById('iterations');
   for (let i = 0; i < iterations; i++) {
     let divParent = document.createElement('div');
@@ -526,41 +621,83 @@ function generateHtmlTags(iterations, c) {
       let divIterationT = document.createElement('div');
       divIterationT.id = `iteration_${i+1}_t_${j+1}`;
 
-      // Para subespacios
+      // Para cortes
       let h4IterationTSubSpaces = document.createElement('h4');
       h4IterationTSubSpaces.innerHTML = `Vecino T #${i+1}-${j+1} - Generación de subespacios`;
       let divCanvasIterationTSubSpaces = document.createElement('div');
-      divCanvasIterationTSubSpaces.id = `iteration_${i+1}_t_${j+1}_subspaces_canvas`;
+      divCanvasIterationTSubSpaces.id = `iteration_${i+1}_t_${j+1}_cuts_canvas`;
       divCanvasIterationTSubSpaces.className = 'container_canvas';
                              
       let btnIterationSubspaceT = document.createElement('button');
-      btnIterationSubspaceT.className = 'iteration_button';
+      btnIterationSubspaceT.className = 'iteration_subspace_button';
       btnIterationSubspaceT.innerHTML = 'Ver representación gráfica';
       btnIterationSubspaceT.addEventListener('click', function () {
-        console.log(`iteration_${i+1}_t_${j+1}_subspaces_canvas`);
-        generateKonvaStages(`iteration_${i+1}_t_${j+1}_subspaces_canvas`);
+        console.log(`iteration_${i+1}_t_${j+1}_cuts_canvas`);
+        generateKonvaStages(`iteration_${i+1}_t_${j+1}_cuts_canvas`);
       });
+                             
+      // Para matriz de subespacios
+      let h4IterationTMatrix = document.createElement('h4');
+      h4IterationTMatrix.innerHTML = `Vecino T #${i+1}-${j+1} - Matriz de subespacios`;
+      let divTableIterationTMatrix = document.createElement('div');
+      divTableIterationTMatrix.id = `iteration_${i+1}_t_${j+1}_container_table`;
+      divTableIterationTMatrix.className = 'container_table';
+      let divCanvasIterationTMatrix = document.createElement('div');
+      divCanvasIterationTMatrix.id = `iteration_${i+1}_t_${j+1}_matrix_canvas`;
+      divCanvasIterationTMatrix.className = 'container_canvas';
+
+      // Select div + select element
+      let divSelectSubspaceTMatrix = document.createElement('div');
+      divSelectSubspaceTMatrix.className = 'select_container';
+      let selectSubspaceTMatrix = document.createElement('select');
+      selectSubspaceTMatrix.id = `iteration_${i+1}_t_${j+1}_select`;
+
+      // Select options
+      for (let j = 0; j < 2**c - 1; j++) {
+        let selectOptionSubspaceTMatrix = document.createElement('option');
+        selectOptionSubspaceTMatrix.value = j;
+        selectOptionSubspaceTMatrix.innerHTML = `Subespacio #${j+1}`;
+        selectSubspaceTMatrix.appendChild(selectOptionSubspaceTMatrix);
+      }
+
+      let btnSelecSubspaceTMatrix = document.createElement('button');
+      btnSelecSubspaceTMatrix.innerHTML = 'Ver Matriz';
+      btnSelecSubspaceTMatrix.className = 'iteration_subspace_button';
+      btnSelecSubspaceTMatrix.addEventListener('click', function () {
+        konvaForMatrix(`iteration_${i+1}_t_${j+1}`);
+      });
+
+      divSelectSubspaceTMatrix.appendChild(selectSubspaceTMatrix);
+      divSelectSubspaceTMatrix.appendChild(btnSelecSubspaceTMatrix);
 
       // Para decode
       let h4IterationTDecode = document.createElement('h4');
       h4IterationTDecode.innerHTML = `Vecino T #${i+1}-${j+1} - Satisfacción de demanda`;
       let divCanvasIterationTDecode = document.createElement('div');
-      divCanvasIterationTDecode.id = `iteration_${i+1}_t_${j+1}_decode_canvas`;
+      divCanvasIterationTDecode.id = `iteration_${i+1}_t_${j+1}_subspaces_canvas`;
       divCanvasIterationTDecode.className = 'container_canvas';
 
       let btnIterationDecodeT = document.createElement('button');
       btnIterationDecodeT.className = 'iteration_button';
       btnIterationDecodeT.innerHTML = 'Ver representación gráfica';
       btnIterationDecodeT.addEventListener('click', function () {
-        console.log(`iteration_${i+1}_t_${j+1}_decode_canvas`);
-        generateKonvaStages(`iteration_${i+1}_t_${j+1}_decode_canvas`);
+        console.log(`iteration_${i+1}_t_${j+1}_subspaces_canvas`);
+        generateKonvaStages(`iteration_${i+1}_t_${j+1}_subspaces_canvas`);
       });
 
+      // Final append subspaces
       divIterationT.appendChild(h4IterationTSubSpaces);
       divIterationT.appendChild(btnIterationSubspaceT);
       divIterationT.appendChild(divCanvasIterationTSubSpaces);
+      
+      // Final append matrix
+      divIterationT.appendChild(h4IterationTMatrix);
+      divIterationT.appendChild(divSelectSubspaceTMatrix);
+      divIterationT.appendChild(divTableIterationTMatrix);
+      divIterationT.appendChild(divCanvasIterationTMatrix);
+
+      // Final append decode
       divIterationT.appendChild(h4IterationTDecode);
-      divIterationT.appendChild(btnIterationDecodeT);
       divIterationT.appendChild(divCanvasIterationTDecode);
 
       divIterationsT.appendChild(divIterationT);
@@ -571,41 +708,83 @@ function generateHtmlTags(iterations, c) {
       let divIterationH = document.createElement('div');
       divIterationH.id = `iteration_${i+1}_h_${j+1}`;
 
-      // Para subespacios
+      // Para cortes
       let h4IterationHSubSpaces = document.createElement('h4');
       h4IterationHSubSpaces.innerHTML = `Vecino H #${i+1}-${j+1} - Generación de subespacios`;
       let divCanvasIterationHSubSpaces = document.createElement('div');
-      divCanvasIterationHSubSpaces.id = `iteration_${i+1}_h_${j+1}_subspaces_canvas`;
+      divCanvasIterationHSubSpaces.id = `iteration_${i+1}_h_${j+1}_cuts_canvas`;
       divCanvasIterationHSubSpaces.className = 'container_canvas';
 
       let btnIterationSubspaceH = document.createElement('button');
-      btnIterationSubspaceH.className = 'iteration_button';
+      btnIterationSubspaceH.className = 'iteration_subspace_button';
       btnIterationSubspaceH.innerHTML = 'Ver representación gráfica';
       btnIterationSubspaceH.addEventListener('click', function () {
-        console.log(`iteration_${i+1}_h_${j+1}_subspaces_canvas`);
-        generateKonvaStages(`iteration_${i+1}_h_${j+1}_subspaces_canvas`);
+        console.log(`iteration_${i+1}_h_${j+1}_cuts_canvas`);
+        generateKonvaStages(`iteration_${i+1}_h_${j+1}_cuts_canvas`);
       });
+                             
+      // Para matriz de subespacios
+      let h4IterationHMatrix = document.createElement('h4');
+      h4IterationHMatrix.innerHTML = `Vecino H #${i+1}-${j+1} - Matriz de subespacios`;
+      let divTableIterationHMatrix = document.createElement('div');
+      divTableIterationHMatrix.id = `iteration_${i+1}_h_${j+1}_container_table`;
+      divTableIterationHMatrix.className = 'container_table';
+      let divCanvasIterationHMatrix = document.createElement('div');
+      divCanvasIterationHMatrix.id = `iteration_${i+1}_h_${j+1}_matrix_canvas`;
+      divCanvasIterationHMatrix.className = 'container_canvas';
+
+      // Select div + select element
+      let divSelectSubspaceHMatrix = document.createElement('div');
+      divSelectSubspaceHMatrix.className = 'select_container';
+      let selectSubspaceHMatrix = document.createElement('select');
+      selectSubspaceHMatrix.id = `iteration_${i+1}_h_${j+1}_select`;
+
+      // Select options
+      for (let j = 0; j < 2**c - 1; j++) {
+        let selectOptionSubspaceHMatrix = document.createElement('option');
+        selectOptionSubspaceHMatrix.value = j;
+        selectOptionSubspaceHMatrix.innerHTML = `Subespacio #${j+1}`;
+        selectSubspaceHMatrix.appendChild(selectOptionSubspaceHMatrix);
+      }
+
+      let btnSelecSubspaceHMatrix = document.createElement('button');
+      btnSelecSubspaceHMatrix.innerHTML = 'Ver Matriz';
+      btnSelecSubspaceHMatrix.className = 'iteration_subspace_button';
+      btnSelecSubspaceHMatrix.addEventListener('click', function () {
+        konvaForMatrix(`iteration_${i+1}_h_${j+1}`);
+      });
+
+      divSelectSubspaceHMatrix.appendChild(selectSubspaceHMatrix);
+      divSelectSubspaceHMatrix.appendChild(btnSelecSubspaceHMatrix);
 
       // Para decode
       let h4IterationHDecode = document.createElement('h4');
       h4IterationHDecode.innerHTML = `Vecino H #${i+1}-${j+1} - Satisfacción de demanda`;
       let divCanvasIterationHDecode = document.createElement('div');
-      divCanvasIterationHDecode.id = `iteration_${i+1}_h_${j+1}_decode_canvas`;
+      divCanvasIterationHDecode.id = `iteration_${i+1}_h_${j+1}_subspaces_canvas`;
       divCanvasIterationHDecode.className = 'container_canvas';
                              
       let btnIterationDecodeH = document.createElement('button');
       btnIterationDecodeH.className = 'iteration_button';
       btnIterationDecodeH.innerHTML = 'Ver representación gráfica';
       btnIterationDecodeH.addEventListener('click', function () {
-        console.log(`iteration_${i+1}_h_${j+1}_decode_canvas`);
-        generateKonvaStages(`iteration_${i+1}_h_${j+1}_decode_canvas`);
+        console.log(`iteration_${i+1}_h_${j+1}_subspaces_canvas`);
+        generateKonvaStages(`iteration_${i+1}_h_${j+1}_subspaces_canvas`);
       });
 
+      // Final append subspaces
       divIterationH.appendChild(h4IterationHSubSpaces);
       divIterationH.appendChild(btnIterationSubspaceH);
       divIterationH.appendChild(divCanvasIterationHSubSpaces);
+
+      // Final append matrix
+      divIterationH.appendChild(h4IterationHMatrix);
+      divIterationH.appendChild(divSelectSubspaceHMatrix);
+      divIterationH.appendChild(divTableIterationHMatrix);
+      divIterationH.appendChild(divCanvasIterationHMatrix);
+
+      // Final append decode
       divIterationH.appendChild(h4IterationHDecode);
-      divIterationH.appendChild(btnIterationDecodeH);
       divIterationH.appendChild(divCanvasIterationHDecode);
       
       divIterationsH.appendChild(divIterationH);
@@ -619,6 +798,34 @@ function generateHtmlTags(iterations, c) {
 ''')
     gen_html_tags.writelines(f'generateHtmlTags({iterations}, {c});')
     gen_html_tags.close()
+
+
+def write_iterations_objects(iterations, c, report_folder):
+    '''Función para escribir objetos de cada una de las iteraciones por los tres tipos de representaciones: cortes/cuts, subespacios/matrix y demanda/decode'''
+    
+    iterations_objects_file = open(f'{report_folder}/web/js/iterations_objects.js',
+                     'w', encoding='utf-8')
+
+    iterations_objects = '''let dataIterationsCuts = {\n'''
+
+    for i in range(iterations):
+        for j in range(2**c - 1):
+            iterations_objects += f"\t'iteration_{i+1}_h_{j+1}_cuts_canvas': data_iteration_vecino_h_{i+1}_{j+1}.cortes,\n"
+            iterations_objects += f"\t'iteration_{i+1}_t_{j+1}_cuts_canvas': data_iteration_vecino_t_{i+1}_{j+1}.cortes,\n"
+
+    iterations_objects += '''};
+    
+    let dataIterationsSubspaces = {\n'''
+
+    for i in range(iterations):
+        for j in range(2**c - 1):
+                iterations_objects += f"\t'iteration_{i+1}_h_{j+1}_subspaces_canvas': data_iteration_vecino_h_{i+1}_{j+1}.subSpaces,\n"
+                iterations_objects += f"\t'iteration_{i+1}_t_{j+1}_subspaces_canvas': data_iteration_vecino_t_{i+1}_{j+1}.subSpaces,\n"
+
+    iterations_objects += '''};'''
+
+    iterations_objects_file.writelines(iterations_objects)
+    iterations_objects_file.close()
 
 
 def write_base_index(file: TextIOWrapper):
@@ -696,12 +903,12 @@ def write_base_styles_files(base_dir):
   border: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: 'Roboto', sans-serif;
 }
 
 body {
   width: 100%;
   height: 100dvh;  
-  font-family: 'Roboto', sans-serif;
   display: flex;
   flex-direction: row;
   overflow: hidden;
@@ -817,7 +1024,7 @@ h4 {
   margin-bottom: 0.5rem;
 }
 
-.iteration_button {
+.iteration_subspace_button {
   padding: 0.5rem;
   background: gray;
   color: white;
@@ -828,6 +1035,36 @@ h4 {
   justify-content: center;
   align-items: center;
   line-height: 100%;
+}
+                              
+.select_container {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem 0;
+}
+
+.select_container select {
+  border: 1px solid lightgray;
+  outline: 0;
+  padding: 0.5rem;
+}
+
+.container_table {
+  max-height: 600px;
+  overflow-y: auto;
+  padding: 10px 0;
+}
+
+.container_table table {
+  border-spacing: 0;
+  font-size: 1.25rem;
+}
+
+.container_table table td {
+  padding: 1rem;
+  border: 1px solid gray;
 }
 ''')
     index_css_file.close()
