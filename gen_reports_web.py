@@ -653,7 +653,7 @@ def write_gen_html_tags(iterations, c, report_folder):
       selectSubspaceTMatrix.id = `iteration_${i+1}_t_${j+1}_select`;
 
       // Select options
-      for (let j = 0; j < 2**c - 1; j++) {
+      for (let j = 0; j < 2**c; j++) {
         let selectOptionSubspaceTMatrix = document.createElement('option');
         selectOptionSubspaceTMatrix.value = j;
         selectOptionSubspaceTMatrix.innerHTML = `Subespacio #${j+1}`;
@@ -740,7 +740,7 @@ def write_gen_html_tags(iterations, c, report_folder):
       selectSubspaceHMatrix.id = `iteration_${i+1}_h_${j+1}_select`;
 
       // Select options
-      for (let j = 0; j < 2**c - 1; j++) {
+      for (let j = 0; j < 2**c; j++) {
         let selectOptionSubspaceHMatrix = document.createElement('option');
         selectOptionSubspaceHMatrix.value = j;
         selectOptionSubspaceHMatrix.innerHTML = `Subespacio #${j+1}`;

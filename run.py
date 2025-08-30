@@ -212,7 +212,6 @@ def run_case(report_folder, case, with_reports=True):
     decode11(sol_ini, items)
 
     mejor_solucion = copy.deepcopy(sol_ini)
-    max_iterations = 10
 
     '''Variables para generar al final los reportes de excel'''
     vecinos_summary = []
@@ -245,10 +244,6 @@ def run_case(report_folder, case, with_reports=True):
         '''
         if mejor_vecino.fitness < mejor_solucion.fitness:
             mejor_solucion = mejor_vecino
-
-            # Con el fin de evitar ciclos infinitos
-            # elif (iteration - 1) == max_iterations:
-            #     break
         else:
             break
 

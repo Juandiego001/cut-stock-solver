@@ -154,10 +154,6 @@ def decode11(s: Solution, items: list[Item]):
         # Se crea la matriz con base en el ancho y largo definidos
         matrix = [[0 for _ in range(new_ancho)] for _ in range(new_largo)]
 
-        # Se determina el desperdicio inicial
-        desp_ancho = round(ancho - new_ancho, 4)
-        desp_largo = round(largo - new_largo, 4)
-
         sorted_items = sorted(
             items, key=lambda i: i.ancho*i.largo, reverse=True)
 
@@ -254,16 +250,15 @@ def decode11(s: Solution, items: list[Item]):
                             Se rellena el item. Se completa el item para verificar si es posible ubicarlo.
                             Validación inicial. len(matriz) - (j + 1) >= largo_item
                             '''
-                            largo_permitido = len(
-                                matrix) - primer_cero[1]
-                            '''
-                            No se puede completar el item, continuar con el siguiente
-                            '''
-                            if largo_permitido < item.largo:
-                                break
+                            largo_permitido = len(matrix) - primer_cero[1]
 
-                            largo_completado, ultimo_cero = completar_x_ancho(
-                                matrix, primer_cero, ultimo_cero, item.ancho, item.largo)
+                            '''
+                            No se puede completar el item, intentar GIRANDOLO!
+                            '''
+                            if largo_permitido >= item.largo:
+                              largo_completado, ultimo_cero = completar_x_ancho(
+                                  matrix, primer_cero, ultimo_cero, item.ancho, item.largo)
+
 
                         if largo_completado and ancho_completado:
                             incluir_item = True
@@ -316,19 +311,18 @@ def decode11(s: Solution, items: list[Item]):
                         for k in range(primer_cero[0], ultimo_cero[0] + 1):
                             matrix[j][k] = item
 
-        # Se calcula el desperdicio final
-        desp_final = 0
+        # Se calcula la cantidad de items que fueron satisfechos
+        cantidad_items = 0
         for j in matrix:
             for k in j:
-                if type(k) == int:
-                    desp_final += 1
+                if type(k) != int:
+                    cantidad_items += 1
 
         # Se suman esos desperdicios de largo y ancho iniciales
-        sub_esp.area_disponible = desp_final + desp_ancho + desp_largo
+        sub_esp.area_disponible -= cantidad_items
         sub_esp.matrix = matrix
 
     '''Se calcula el desperdicio como el área disponible de cada subespacio'''
-    '''El desperdicio se suma solamente si el subespacio fue utilizado para satisfacer la demanda de un item'''
     for sub_es in s.v_sub:
         s.desperdicio += sub_es.area_disponible
 
