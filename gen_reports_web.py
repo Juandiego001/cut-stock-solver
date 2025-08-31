@@ -1,7 +1,7 @@
 from io import TextIOWrapper
 
 
-def write_final_index(iterations, file: TextIOWrapper):
+def write_final_index(iterations, report_folder: str):
     '''Función para escribir la parte final del archivo index.html'''
 
     script_tags = '''
@@ -29,7 +29,9 @@ def write_final_index(iterations, file: TextIOWrapper):
   </body>
 </html>
 '''
-    file.writelines(final_part)
+    index_html_file = open(report_folder, 'a', encoding='utf-8')
+    index_html_file.writelines(final_part)
+    index_html_file.close()
 
 
 def write_konva_for_sub_subspaces(report_folder):
@@ -828,16 +830,18 @@ def write_iterations_objects(iterations, c, report_folder):
     iterations_objects_file.close()
 
 
-def write_base_index(file: TextIOWrapper):
+def write_base_index(file_dir: str):
     '''Escribe el archivo index.html base'''
 
-    file.writelines('''
+    file_dir_date = file_dir.split('report_')[1]
+    index_html_file = open(file_dir, 'w+', encoding='utf-8')
+    index_html_file.writelines(f'''
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Resumen Reporte 2025-05-23_19_37_23</title>
+  <title>Resumen Reporte {file_dir_date}</title>
   <link rel="stylesheet" href="./styles/normalize.css">
   <link rel="stylesheet" href="./styles/index.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
@@ -891,6 +895,7 @@ def write_base_index(file: TextIOWrapper):
     </section>
   </article>
 ''')
+    index_html_file.close()
 
 
 def write_base_styles_files(base_dir):

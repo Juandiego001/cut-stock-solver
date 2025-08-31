@@ -1,3 +1,19 @@
+'''
+Notas.
+
+Este archivo permite la generación de los parámetros para testear el modelo de AMPL.
+
+Aclaración.
+
+a[o,k,q,j] p, parámetro binario o coeficiente binario que se define:
+
+- o: orientación (1: vertical, 0: horizontal).
+- q: posición.
+- k: plato a cortar.
+- j: plato a obtener.
+- p: cantidad del plato j a obtener luego del corte.
+'''
+
 piezas = []
 
 def buscar_pieza(x, y):

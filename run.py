@@ -41,8 +41,8 @@ def lectura(case: str):
     return ancho_grande, largo_grande, items
 
 
-def generate_reports_web(report_folder, data):
-    '''Generar reportes de excel'''
+def generate_reports_web(report_folder: str, data: dict):
+    '''Generar reportes web'''
 
     '''Se crean las carpetas donde se guardará el reporte web'''
     os.makedirs(f'{report_folder}/web/js/iterations')
@@ -52,9 +52,7 @@ def generate_reports_web(report_folder, data):
     write_base_styles_files(f'{report_folder}/web/styles')
 
     '''Se escribe el archivo index.html'''
-    index_html_file = open(f'{report_folder}/web/index.html', 'w+', encoding='utf-8')
-    write_base_index(index_html_file)
-    index_html_file.close()
+    write_base_index(f'{report_folder}/web/index.html')
 
     test_case = data['test_case']
     sol_ini = data['sol_ini']
@@ -136,9 +134,7 @@ def generate_reports_web(report_folder, data):
     write_gen_konva(report_folder)
 
     '''Escribir la parte final del archivo index.html'''
-    index_html_file = open(f'{report_folder}/web/index.html', 'a', encoding='utf-8')
-    write_final_index(iterations['count'], index_html_file)
-    index_html_file.close()
+    write_final_index(iterations['count'], f'{report_folder}/web/index.html')
 
 
 def generate_reports(report_folder, data):

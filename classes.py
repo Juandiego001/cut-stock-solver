@@ -25,7 +25,7 @@ class SubEs:
         self.largo = largo  # Largo del subespacio
         self.area_disponible = ancho*largo
         # Capacidad de cada item dentro del subespacio
-        self.items_capacidad = {}
+        self.items_capacidad = items_capacidad
         self.matrix = [] # Matriz final de ubicación de cada item
 
     def __str__(self):
