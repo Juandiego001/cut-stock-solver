@@ -8,3 +8,4 @@ generate_data_ampl/tests
 *.exe
 .vscode
 reports_bottom_left
+v1/reports

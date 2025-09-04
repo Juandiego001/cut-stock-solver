@@ -1,6 +1,6 @@
 import math
 import os
-from classes import Item, SubEs
+from v1.classes import Item, SubEs
 from datetime import datetime
 
 
@@ -498,6 +498,9 @@ def generate_report_web(report_folder: str, sub_esp: SubEs):
 
 if __name__ == '__main__':
 
+    '''
+    Se establecen los items manualmente
+    '''
     items = [
         Item(id=1, dem=4, ancho=1, largo=4),
         Item(id=2, dem=4, ancho=2, largo=1),
