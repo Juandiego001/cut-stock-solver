@@ -1,8 +1,15 @@
+import sys
 import copy
-import math
-from classes import Item
+from classes import Item, Solution
 
-def make_cut(id_item: int, ancho_item: int, largo_item: int, index_selected_matrix: int, ultimo_cero: tuple[int, int], available_matrixes: list[list], added_items: list, all_matrixes: list[list]):
+
+def make_cut(id_item: int, ancho_item: int,
+             largo_item: int,
+             index_selected_matrix: int,
+             ultimo_cero: tuple[int, int],
+             available_matrixes: list[list],
+             added_items: list,
+             all_matrixes: list[list]):
     '''
     ultima_pos (2, 2) -> x: 2 y: 2
     '''
@@ -156,164 +163,300 @@ def ubicar_x_dimension(matrix: list[list], j: int, item: Item, dimension: int):
     return completado, primer_cero, ultimo_cero
 
 
-def sol_inicial(ancho_grande, largo_grande, items: list[Item]):
+def generate_solution(ancho_grande, largo_grande, items: list[Item]) -> Solution:
+    '''Get solution'''
 
-  # Se crea la matriz con base en el ancho y largo definidos
-  init_matrix = [[0 for _ in range(ancho_grande)] for _ in range(largo_grande)]
+    s = Solution()
+    s.permutation = items
 
-  all_matrixes = []
-  added_items = []
-  available_matrixes = [init_matrix]
+    '''Vector iniciales de demandas completadas y faltantes'''
+    for item in items:
+        s.dem_com[item.id] = 0  # Demanda completada
+        s.dem_fal[item.id] = item.dem  # Demanda faltante
 
-  for item in items:
-    '''
-    ¿Ancho es igual al largo?
-    '''
-    ancho_eq_largo = item.ancho == item.largo
+    # Se crea la matriz con base en el ancho y largo definidos
+    init_matrix = [[0 for _ in range(ancho_grande)]
+                   for _ in range(largo_grande)]
 
-    '''
+    all_matrixes = []
+    added_items = []
+    available_matrixes = [init_matrix]
+
+    for item in items:
+        '''
+        ¿Ancho es igual al largo?
+        '''
+        ancho_eq_largo = item.ancho == item.largo
+
+        '''
     ¿Se debe incluir el item en el subespacio?
     '''
-    incluir_item = False
+        incluir_item = False
 
-    index_selected_matrix = -1
-    primer_cero = -1
-    ultimo_cero = -1
+        index_selected_matrix = -1
+        primer_cero = -1
+        ultimo_cero = -1
 
-    ancho_item = item.ancho
-    largo_item = item.largo
-    for i in range(len(available_matrixes)):
+        ancho_item = item.ancho
+        largo_item = item.largo
+        for i in range(len(available_matrixes)):
 
-      matrix = available_matrixes[i]
-      index_selected_matrix = i
+            matrix = available_matrixes[i]
+            index_selected_matrix = i
 
-      # Si ancho es igual al largo, la validación es normal y no se debe
-      # validar por ambos lados.
-      if ancho_eq_largo:
-          '''
-          Fase inicial.
-          Se determina primero la ubicación del ancho base del item.
-          '''
-          for j in range(len(matrix)):
-              ancho_completado, primer_cero, ultimo_cero = recorrer_ancho(
-                  matrix, j, item)
+            # Si ancho es igual al largo, la validación es normal y no se debe
+            # validar por ambos lados.
+            if ancho_eq_largo:
+                '''
+                Fase inicial.
+                Se determina primero la ubicación del ancho base del item.
+                '''
+                for j in range(len(matrix)):
+                    ancho_completado, primer_cero, ultimo_cero = recorrer_ancho(
+                        matrix, j, item)
 
-              '''
+                    '''
               Si no se logró establecer el ancho, se debe continuar buscando en otras filas de la matriz
               '''
-              if not ancho_completado:
-                  continue
+                    if not ancho_completado:
+                        continue
 
-              '''
+                    '''
               Validación de si el item es de largo 1.
               Si el item es de largo 1 y el ancho ya fue completado, entonces el item puede ser incluido en el subespacio.
               '''
-              if item.largo == 1:
-                  incluir_item = True
-                  break
+                    if item.largo == 1:
+                        incluir_item = True
+                        break
 
-              '''
+                    '''
               Fase posterior.
               Se rellena el item. Se completa el item para verificar si es posible ubicarlo.
               Validación inicial. len(matriz) - (j + 1) >= largo_item
               '''
-              largo_permitido = len(matrix) - primer_cero[1]
-              '''
+                    largo_permitido = len(matrix) - primer_cero[1]
+                    '''
               No se puede completar el item, continuar con el siguiente
               '''
-              if largo_permitido < item.largo:
-                  break
+                    if largo_permitido < item.largo:
+                        break
 
-              largo_completado, ultimo_cero = completar_x_ancho(
-                  matrix, primer_cero, ultimo_cero, item.ancho, item.largo)
-
-              if largo_completado and ancho_completado:
-                  incluir_item = True
-                  break
-
-      # Si ancho es igual al largo, la validación es normal y no se debe
-      # validar por ambos lados.
-      else:
-          '''
-          Fase inicial.
-          Se intenta colocar por ancho el item.
-          '''
-          for j in range(len(matrix)):
-              largo_completado = False
-              ancho_completado, primer_cero, ultimo_cero = ubicar_x_dimension(
-                  matrix, j, item, 0)
-              if ancho_completado:
-                  '''
-                  Validación de si el item es de largo 1.
-                  Si el item es de largo 1 y el ancho ya fue completado, entonces el item puede ser incluido en el subespacio.
-                  '''
-                  if item.largo == 1:
-                    incluir_item = True
-                    break
-              
-                  '''
-                  Fase posterior.
-                  Se rellena el item. Se completa el item para verificar si es posible ubicarlo.
-                  Validación inicial. len(matriz) - (j + 1) >= largo_item
-                  '''
-                  largo_permitido = len(matrix) - primer_cero[1]
-
-                  '''
-                  No se puede completar el item, intentar GIRANDOLO!
-                  '''
-                  if largo_permitido >= item.largo:
                     largo_completado, ultimo_cero = completar_x_ancho(
                         matrix, primer_cero, ultimo_cero, item.ancho, item.largo)
 
+                    if largo_completado and ancho_completado:
+                        incluir_item = True
+                        break
 
-              if largo_completado and ancho_completado:
-                  incluir_item = True
-                  break
+            # Si ancho es igual al largo, la validación es normal y no se debe
+            # validar por ambos lados.
+            else:
+                '''
+                Fase inicial.
+                Se intenta colocar por ancho el item.
+                '''
+                for j in range(len(matrix)):
+                    largo_completado = False
+                    ancho_completado, primer_cero, ultimo_cero = ubicar_x_dimension(
+                        matrix, j, item, 0)
+                    if ancho_completado:
+                        '''
+                        Validación de si el item es de largo 1.
+                        Si el item es de largo 1 y el ancho ya fue completado, entonces el item puede ser incluido en el subespacio.
+                        '''
+                        if item.largo == 1:
+                            incluir_item = True
+                            break
 
-              largo_completado, primer_cero, ultimo_cero = ubicar_x_dimension(
-                  matrix, j, item, 1)
-              if largo_completado:
-                  '''
-                  Validación de si el item es de ancho 1.
-                  Si el item es de ancho 1 y el largo ya fue completado, entonces el item puede ser incluido en el subespacio.
-                  '''
-                  if item.ancho == 1:
-                    incluir_item = True
-                    ancho_item = item.largo
-                    largo_item = item.ancho
-                    break
-
-                  '''
+                        '''
                   Fase posterior.
                   Se rellena el item. Se completa el item para verificar si es posible ubicarlo.
                   Validación inicial. len(matriz) - (j + 1) >= largo_item
                   '''
-                  largo_permitido = len(
-                      matrix) - (primer_cero[1] + 1)
+                        largo_permitido = len(matrix) - primer_cero[1]
+
+                        '''
+                  No se puede completar el item, intentar GIRANDOLO!
                   '''
+                        if largo_permitido >= item.largo:
+                            largo_completado, ultimo_cero = completar_x_ancho(
+                                matrix, primer_cero, ultimo_cero, item.ancho, item.largo)
+
+                    if largo_completado and ancho_completado:
+                        incluir_item = True
+                        break
+
+                    largo_completado, primer_cero, ultimo_cero = ubicar_x_dimension(
+                        matrix, j, item, 1)
+                    if largo_completado:
+                        '''
+                        Validación de si el item es de ancho 1.
+                        Si el item es de ancho 1 y el largo ya fue completado, entonces el item puede ser incluido en el subespacio.
+                        '''
+                        if item.ancho == 1:
+                            incluir_item = True
+                            ancho_item = item.largo
+                            largo_item = item.ancho
+                            break
+
+                        '''
+                  Fase posterior.
+                  Se rellena el item. Se completa el item para verificar si es posible ubicarlo.
+                  Validación inicial. len(matriz) - (j + 1) >= largo_item
+                  '''
+                        largo_permitido = len(
+                            matrix) - (primer_cero[1] + 1)
+                        '''
                   No se puede completar el item, continuar con el siguiente
                   '''
-                  if largo_permitido < item.ancho:
-                      break
-                  ancho_completado, ultimo_cero = completar_x_ancho(
-                      matrix, primer_cero, ultimo_cero, item.largo, item.ancho)
+                        if largo_permitido < item.ancho:
+                            break
+                        ancho_completado, ultimo_cero = completar_x_ancho(
+                            matrix, primer_cero, ultimo_cero, item.largo, item.ancho)
 
-              if largo_completado and ancho_completado:
-                  incluir_item = True
-                  ancho_item = item.largo
-                  largo_item = item.ancho
-                  break
-      
-      if incluir_item:
-          break
+                    if largo_completado and ancho_completado:
+                        incluir_item = True
+                        ancho_item = item.largo
+                        largo_item = item.ancho
+                        break
 
-    if incluir_item:
-        matrix = available_matrixes[index_selected_matrix]
-        for j in range(primer_cero[1], ultimo_cero[1] + 1):
-            for k in range(primer_cero[0], ultimo_cero[0] + 1):
-              matrix[j][k] = item.id
-        available_matrixes[index_selected_matrix] = matrix
+            if incluir_item:
+                break
 
-        make_cut(item.id, ancho_item, largo_item, index_selected_matrix, ultimo_cero, available_matrixes, added_items, all_matrixes)
+        if incluir_item:
+            s.dem_com[item.id] += 1  # Se actualiza la demanda completada
+            s.dem_fal[item.id] -= 1  # Se actualizada la demanda faltante
 
-  return all_matrixes
+            matrix = available_matrixes[index_selected_matrix]
+            for j in range(primer_cero[1], ultimo_cero[1] + 1):
+                for k in range(primer_cero[0], ultimo_cero[0] + 1):
+                    matrix[j][k] = item.id
+            available_matrixes[index_selected_matrix] = matrix
+
+            make_cut(item.id, ancho_item, largo_item, index_selected_matrix,
+                     ultimo_cero, available_matrixes, added_items, all_matrixes)
+
+    s.matrixes = all_matrixes
+
+    '''Calculo del desperdicio'''
+    z_s = 0
+    for i in available_matrixes:
+        for j in i:
+            for k in j:
+                if k == 0:
+                    z_s += 1
+    s.desperdicio = z_s
+
+    '''Calculo del fitness'''
+    s.fitness = z_s + 2 * \
+        sum([dem_fal for dem_fal in s.dem_fal.values()])
+
+    return s
+
+
+def swap_generation(items: list[Item]):
+    '''Swap generation algorithm'''
+
+    n = len(items)
+    all_swaps = []
+    for i in range(n - 1):
+        for j in range(i + 1, n):
+            arreglo_temporal = list(items)
+            arreglo_temporal[i], arreglo_temporal[j] = arreglo_temporal[j], arreglo_temporal[i]
+            if arreglo_temporal != items:  # Si es diferente del arreglo original, agreguelo
+                all_swaps.append(arreglo_temporal)
+
+    return all_swaps
+
+
+def vecindario_swap(ancho_grande, largo_grande, items: list[Item]):
+    '''Crear un vecindario a través del algoritmo swap'''
+
+    best_fitness = sys.maxsize
+    all_swaps = swap_generation(items)
+    vecinos = []
+
+    for i in all_swaps:
+        s_vecino = generate_solution(ancho_grande, largo_grande, i)
+        vecinos.append(copy.deepcopy(s_vecino))
+
+        '''Actualizar mejor solución'''
+        if s_vecino.fitness < best_fitness:
+            best_fitness = s_vecino.fitness
+            s_mejor = copy.deepcopy(s_vecino)
+
+    return s_mejor, vecinos
+
+
+def insertions_generation(items: list[Item]):
+    '''Insertions generation algorithm'''
+
+    n = len(items)
+    all_insertions = []
+    for i in range(n):
+        elemento_a_mover = items[i]
+        arreglo_sin_elemento = items[:i] + items[i+1:]
+        for j in range(n):
+            nuevo_arreglo = arreglo_sin_elemento[:]
+            nuevo_arreglo.insert(j, elemento_a_mover)
+
+            if nuevo_arreglo != items:  # Si es diferente del arreglo original, agreguelo
+                all_insertions.append(nuevo_arreglo)
+
+    return all_insertions
+
+
+def vecindario_insertions(ancho_grande, largo_grande, items: list[Item]):
+    '''Crear un vecindario a través del algoritmo insertions'''
+
+    best_fitness = sys.maxsize
+    all_insertions = insertions_generation(items)
+    vecinos = []
+
+    for i in all_insertions:
+        s_vecino = generate_solution(ancho_grande, largo_grande, i)
+        vecinos.append(copy.deepcopy(s_vecino))
+
+        '''Actualizar mejor solución'''
+        if s_vecino.fitness < best_fitness:
+            best_fitness = s_vecino.fitness
+            s_mejor = copy.deepcopy(s_vecino)
+
+    return s_mejor, vecinos
+
+
+def two_opt_generation(items: list[Item]):
+    '''2OPT generation algorithm'''
+
+    n = len(items)
+    all_2opt = []
+    for i in range(n - 1):
+        for k in range(i + 1, n):
+            segmento_inicio = items[:i]
+            segmento_a_invertir = items[i:k+1]
+            segmento_invertido = segmento_a_invertir[::-1]
+            segmento_final = items[k+1:]
+            nuevo_arreglo = segmento_inicio + segmento_invertido + segmento_final
+            if nuevo_arreglo != items:
+                all_2opt.append(nuevo_arreglo)
+
+    return all_2opt
+
+
+def vecindario_2opt(ancho_grande, largo_grande, items: list[Item]):
+    '''Crear un vecindario a través del algoritmo 2OPT'''
+
+    best_fitness = sys.maxsize
+    all_2opt = two_opt_generation(items)
+    vecinos = []
+
+    for i in all_2opt:
+        s_vecino = generate_solution(ancho_grande, largo_grande, i)
+        vecinos.append(copy.deepcopy(s_vecino))
+
+        '''Actualizar mejor solución'''
+        if s_vecino.fitness < best_fitness:
+            best_fitness = s_vecino.fitness
+            s_mejor = copy.deepcopy(s_vecino)
+
+    return s_mejor, vecinos

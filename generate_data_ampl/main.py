@@ -13,13 +13,17 @@ a[o,k,q,j] p, parámetro binario o coeficiente binario que se define:
 - j: plato a obtener.
 - p: cantidad del plato j a obtener luego del corte.
 '''
+from datetime import datetime
+
 
 piezas = []
+
 
 def buscar_pieza(x, y):
   '''Busca si existe la pieza en la lista sin importar el orden'''
 
   return (x, y) in piezas or (y, x) in piezas
+
 
 def indice_pieza(x, y):
   '''Retorna el índice de la pieza asumiendo que ya existe en la lista piezas'''
@@ -30,10 +34,14 @@ def indice_pieza(x, y):
 
 
 if __name__ == '__main__':
+  # Tomar el tiempo de inicio
+  start_date = datetime.now()
+  print(f'Ejecutado a las {start_date.strftime('%H:%M:%S')}')
+
   # Determinar el test a realizar
-  f_test = open(f'./tests/test3.txt', 'r')
+  f_test = open(f'./tests/test9.txt', 'r')
   lines = f_test.readlines()
-  ancho_original_str, largo_original_str = lines[0].split(' ')
+  ancho_original_str, largo_original_str = lines[0].split(',')
   ancho_original = int(ancho_original_str) # Ancho de la pieza original
   largo_original = int(largo_original_str) # Largo de la pieza original
   piezas.append((ancho_original, largo_original)) # Se agrega la pieza original
@@ -41,7 +49,7 @@ if __name__ == '__main__':
   # Lista de piezas buscadas
   piezas_buscadas = []
   for i in range(1, len(lines)):
-    ancho_str, largo_str, dem_str = lines[i].split(' ')
+    ancho_str, largo_str, dem_str = lines[i].split(',')
     piezas_buscadas.append((int(ancho_str), int(largo_str), int(dem_str)))
 
   # Archivo data.dat a generar
@@ -169,3 +177,8 @@ if __name__ == '__main__':
     area = pieza[0] * pieza[1]
     print(f'param Area[{index}] {area};')
     f.writelines(f'param Area[{index}] {area};\n')
+  
+  end_date = datetime.now()
+  elapsed_time = (end_date - start_date).seconds
+  print(f'Finalizado a las {end_date.strftime('%H:%M:%S')}')
+  print(f'Elapsed time: {elapsed_time} seconds')
