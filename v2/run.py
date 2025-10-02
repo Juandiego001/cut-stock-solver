@@ -4,7 +4,7 @@ from datetime import datetime
 from classes import Item, Solution
 from multiprocessing import Process
 from main import generate_solution, vecindario_2opt, vecindario_insertions, vecindario_swap
-from gen_reports.gen_reports_excel import create_sheets_iterations, create_sheets_summary, write_iterations_summary, write_solution_debug, write_solution_info, write_test_case
+from gen_reports.gen_reports_excel import create_sheets_iterations, create_sheets_summary, write_iterations_summary, write_solution_debug, write_solution_info, write_solution_iteration_info, write_test_case
 
 
 cases_dir = 'cases'
@@ -22,7 +22,7 @@ def lectura(case: str):
     '''
 
     items = []
-    f = open(f'./cases/{case}.txt', 'r')
+    f = open(f'./cases/small/{case}.txt', 'r')
     lineas_archivo = f.readlines()
     ancho_grande = int(lineas_archivo[0])
     largo_grande = int(lineas_archivo[1])
@@ -86,9 +86,27 @@ def generate_reports(report_folder, data):
     all_vecinos_swap = iterations['all_vecinos_swap']
     all_vecinos_insertions = iterations['all_vecinos_insertions']
     all_vecinos_2opt = iterations['all_vecinos_2opt']
-    
+
     for i, iter in enumerate(range(iterations['count'])):
-        
+
+        wb_swap_iteration = create_sheets_iterations(iter)
+        write_solution_iteration_info(
+            wb_swap_iteration['Info'], all_vecinos_swap[i][0])
+        wb_swap_iteration.save(f'{report_folder}/swap/{iter}.xlsx')
+        wb_swap_iteration.close()
+
+        wb_insertions_iteration = create_sheets_iterations(iter)
+        write_solution_iteration_info(
+            wb_insertions_iteration['Info'], all_vecinos_insertions[i][0])
+        wb_insertions_iteration.save(f'{report_folder}/insertions/{iter}.xlsx')
+        wb_insertions_iteration.close()
+
+        wb_2opt_iteration = create_sheets_iterations(iter)
+        write_solution_iteration_info(
+            wb_2opt_iteration['Info'], all_vecinos_2opt[i][0])
+        wb_2opt_iteration.save(f'{report_folder}/2opt/{iter}.xlsx')
+        wb_2opt_iteration.close()
+
         os.mkdir(f'{report_folder}/swap/{iter}')
         for index, j in enumerate(all_vecinos_swap[i][0]):
             wb_swap_iteration = create_sheets_iterations(iter)
@@ -96,7 +114,7 @@ def generate_reports(report_folder, data):
             write_solution_debug(wb_swap_iteration['Debug'], j.matrixes)
             wb_swap_iteration.save(f'{report_folder}/swap/{iter}/{index}.xlsx')
             wb_swap_iteration.close()
-        
+
         os.mkdir(f'{report_folder}/insertions/{iter}')
         for index, j in enumerate(all_vecinos_insertions[i][0]):
             wb_insertions_iteration = create_sheets_iterations(iter)
@@ -104,7 +122,7 @@ def generate_reports(report_folder, data):
             write_solution_debug(wb_insertions_iteration['Debug'], j.matrixes)
             wb_insertions_iteration.save(f'{report_folder}/insertions/{iter}/{index}.xlsx')
             wb_insertions_iteration.close()
-        
+
         os.mkdir(f'{report_folder}/2opt/{iter}')
         for index, j in enumerate(all_vecinos_2opt[i][0]):
             wb_2opt_iteration = create_sheets_iterations(iter)
@@ -116,8 +134,8 @@ def generate_reports(report_folder, data):
         iter += 1
 
 
-def run_case(report_folder, case, with_reports=True):
-    '''Función para ejecutar cada caso'''
+def vns(report_folder, case, with_reports=True):
+    '''Función de búsqueda local'''
 
     '''Creación de carpeta para cada caso'''
     report_folder = f'{report_folder}/{case}'
@@ -127,7 +145,7 @@ def run_case(report_folder, case, with_reports=True):
 
     sol_ini = generate_solution(ancho_grande, largo_grande, items)
 
-    mejor_solucion = copy.deepcopy(sol_ini)
+    mejor_vecino = mejor_solucion = copy.deepcopy(sol_ini)
 
     '''Variables para generar al final los reportes de excel'''
     vecinos_summary = []
@@ -138,11 +156,11 @@ def run_case(report_folder, case, with_reports=True):
     iteration = 1
     while True:
         mejor_vecino_swap, vecinos_swap = vecindario_swap(
-            ancho_grande, largo_grande, items)
+            ancho_grande, largo_grande, mejor_solucion.permutation)
         mejor_vecino_insertions, vecinos_insertions = vecindario_insertions(
-            ancho_grande, largo_grande, items)
+            ancho_grande, largo_grande, mejor_solucion.permutation)
         mejor_vecino_2opt, vecinos_2opt = vecindario_2opt(
-            ancho_grande, largo_grande, items)
+            ancho_grande, largo_grande, mejor_solucion.permutation)
 
         '''Almacenar para reporte'''
         vecinos_summary.append((iteration,
@@ -163,7 +181,8 @@ def run_case(report_folder, case, with_reports=True):
         elif mejor_vecino_2opt.fitness < mejor_vecino_swap.fitness and mejor_vecino_2opt.fitness < mejor_vecino_insertions.fitness:
             mejor_vecino = mejor_vecino_2opt
         else:
-            mejor_vecino = mejor_solucion
+            # Si todos son iguales, se toma el mejor vecino de swap
+            mejor_vecino = mejor_vecino_swap
 
         '''
         Si el mejor vecino es mejor que la mejor solución iterada, entonces actualice la mejor solución iterada,
@@ -179,22 +198,22 @@ def run_case(report_folder, case, with_reports=True):
     print(f'Case {case}, iterations: {iteration}')
 
     data = {
-            'test_case': {
-                'case': case,
-                'ancho_grande': ancho_grande,
-                'largo_grande': ancho_grande,
-                'items': items,
-            },
-            'sol_ini': sol_ini,
-            'vecinos_summary': vecinos_summary,
-            'mejor_solucion': mejor_solucion,
-            'iterations': {
-                'count': iteration,
-                'all_vecinos_swap': all_vecinos_swap,
-                'all_vecinos_insertions': all_vecinos_insertions,
-                'all_vecinos_2opt': all_vecinos_2opt
-            }
+        'test_case': {
+            'case': case,
+            'ancho_grande': ancho_grande,
+            'largo_grande': ancho_grande,
+            'items': items,
+        },
+        'sol_ini': sol_ini,
+        'vecinos_summary': vecinos_summary,
+        'mejor_solucion': mejor_solucion,
+        'iterations': {
+            'count': iteration,
+            'all_vecinos_swap': all_vecinos_swap,
+            'all_vecinos_insertions': all_vecinos_insertions,
+            'all_vecinos_2opt': all_vecinos_2opt
         }
+    }
 
     generate_reports(report_folder, data)
 
@@ -215,7 +234,7 @@ if __name__ == '__main__':
         all_processes = []
         for case_file in os.listdir(cases_dir):
             case = case_file.split('.')[0]
-            p = Process(target=run_case, args=(report_folder, case))
+            p = Process(target=vns, args=(report_folder, case))
             all_processes.append(p)
 
         for each_process in all_processes:
@@ -227,7 +246,7 @@ if __name__ == '__main__':
         case_file = input(
             'Digite el nombre del caso que desea ejecutar (o dejar en blanco para test1): ')
         case_file = 'test1' if not case_file else case_file
-        run_case(report_folder, case_file)
+        vns(report_folder, case_file)
 
     '''Tiempo final'''
     end_date = datetime.now()

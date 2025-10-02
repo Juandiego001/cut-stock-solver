@@ -164,7 +164,7 @@ def ubicar_x_dimension(matrix: list[list], j: int, item: Item, dimension: int):
 
 
 def generate_solution(ancho_grande, largo_grande, items: list[Item]) -> Solution:
-    '''Get solution'''
+    '''Decode: Get solution'''
 
     s = Solution()
     s.permutation = items
@@ -397,6 +397,8 @@ def insertions_generation(items: list[Item]):
         elemento_a_mover = items[i]
         arreglo_sin_elemento = items[:i] + items[i+1:]
         for j in range(n):
+            if i == j:
+                continue
             nuevo_arreglo = arreglo_sin_elemento[:]
             nuevo_arreglo.insert(j, elemento_a_mover)
 

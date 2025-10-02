@@ -1,7 +1,10 @@
 import random
 from classes import Solution
 from openpyxl import Workbook
+from openpyxl.worksheet.worksheet import Worksheet
+from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
+
 
 
 general_alignment = Alignment(horizontal='center', vertical='center')
@@ -122,20 +125,28 @@ def write_iterations_summary(ws, iteration, z_swap, z_insertions, z_2opt, z_best
     ws[f'B{iteration+1}'] = z_swap
     ws[f'C{iteration+1}'] = z_insertions
     ws[f'D{iteration+1}'] = z_2opt
-    ws[f'E{iteration+1}'] = z_best    
+    ws[f'E{iteration+1}'] = z_best
 
     if z_swap < z_insertions and z_swap < z_2opt and z_swap < z_best:
         ws[f'B{iteration+1}'].font = Font(color='FFFFFF', bold=True)
-        ws[f'B{iteration+1}'].fill = PatternFill(fill_type='solid', fgColor='00963634')
+        ws[f'B{iteration+1}'].fill = PatternFill(
+            fill_type='solid', fgColor='00963634')
         ws[f'F{iteration+1}'] = 'Vecino Swap'
     elif z_insertions < z_swap and z_insertions < z_2opt and z_insertions < z_best:
         ws[f'C{iteration+1}'].font = Font(color='FFFFFF', bold=True)
-        ws[f'C{iteration+1}'].fill = PatternFill(fill_type='solid', fgColor='00963634')
+        ws[f'C{iteration+1}'].fill = PatternFill(
+            fill_type='solid', fgColor='00963634')
         ws[f'F{iteration+1}'] = 'Vecino Insertions'
     elif z_2opt < z_swap and z_2opt < z_insertions and z_2opt < z_best:
         ws[f'D{iteration+1}'].font = Font(color='FFFFFF', bold=True)
-        ws[f'D{iteration+1}'].fill = PatternFill(fill_type='solid', fgColor='00963634')
+        ws[f'D{iteration+1}'].fill = PatternFill(
+            fill_type='solid', fgColor='00963634')
         ws[f'F{iteration+1}'] = 'Vecino 2OPT'
+    elif z_swap != z_best:
+        ws[f'B{iteration+1}'].font = Font(color='FFFFFF', bold=True)
+        ws[f'B{iteration+1}'].fill = PatternFill(
+            fill_type='solid', fgColor='00963634')
+        ws[f'F{iteration+1}'] = 'Vecino Swap'
 
 
 def create_sheets_iterations(iteration: int):
@@ -165,6 +176,59 @@ def generate_random_color():
         the_color = f'{rojo:02x}{verde:02x}{azul:02x}'
 
     return the_color
+
+
+def write_solution_iteration_info(ws: Worksheet, solutions: list[Solution]):
+    '''Write solution iteration info'''
+
+    # Vecinos title
+    ws['A1'] = 'Vecinos'
+    ws['A1'].font = headers_font
+    ws['A1'].fill = headers_bg
+    ws['A1'].alignment = general_alignment
+    ws['A1'].border = white_border
+    ws.column_dimensions['A'].width = 15
+
+    permutation_size = len(solutions[0].permutation)
+    desperdicio_column = permutation_size + 1
+    fitness_column = permutation_size + 2
+    for i, solution in enumerate(solutions):
+        ws[f'A{i+2}'] = i+1
+        ws[f'A{i+2}'].alignment = general_alignment
+        ws[f'A{i+2}'].border = black_border
+
+        for j, item in enumerate(solution.permutation):
+            ws.cell(row=i+2, column=j+2).value = item.id
+            ws.cell(row=i+2, column=j+2).alignment = general_alignment
+            ws.cell(row=i+2, column=j+2).border = black_border
+
+        ws.cell(row=i+2, column=desperdicio_column).value = solution.desperdicio
+        ws.cell(row=i+2, column=desperdicio_column).alignment = general_alignment
+        ws.cell(row=i+2, column=desperdicio_column).border = black_border
+
+        ws.cell(row=i+2, column=fitness_column).value = solution.fitness
+        ws.cell(row=i+2, column=fitness_column).alignment = general_alignment
+        ws.cell(row=i+2, column=fitness_column).border = black_border
+    
+    for i in range(permutation_size):
+        ws.column_dimensions[get_column_letter(i+2)].width = 5
+
+    # Desperdicio title
+    ws.cell(row=1, column=desperdicio_column).value = 'Desperdicio'
+    ws.cell(row=1, column=desperdicio_column).font = headers_font
+    ws.cell(row=1, column=desperdicio_column).fill = headers_bg
+    ws.cell(row=1, column=desperdicio_column).alignment = general_alignment
+    ws.cell(row=1, column=desperdicio_column).border = white_border
+    ws.column_dimensions[get_column_letter(desperdicio_column)].width = 15
+
+    # Fitness title
+    ws.cell(row=1, column=fitness_column).value = 'Fitness'
+    ws.cell(row=1, column=fitness_column).font = headers_font
+    ws.cell(row=1, column=fitness_column).fill = headers_bg
+    ws.cell(row=1, column=fitness_column).alignment = general_alignment
+    ws.cell(row=1, column=fitness_column).border = white_border
+    ws.column_dimensions[get_column_letter(fitness_column)].width = 15
+
 
 
 def write_solution_info(ws, solution: Solution):

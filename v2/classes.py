@@ -16,7 +16,7 @@ class Solution:
         self.desperdicio = 0.0  # Desperdicio final
         self.fitness = 0  # Puntuación de que tan buena es la solución
         self.matrixes = []  # Guardar los cortes de la solución para la representación gráfica
-        self.permutation: list[Item] = []  # Guardar los cortes de la solución para la representación gráfica
+        self.permutation: list[Item] = [] # Guardar los cortes de la solución para la representación gráfica
 
     def __str__(self):
         pass
