@@ -48,7 +48,7 @@ def make_cut(id_item: int, ancho_item: int,
     '''
     if new_subspace_w == 0:
         new_matrix_1 = [[0 for i in range(ancho_item)]
-                        for j in range(largo_item)]
+                        for j in range(new_subspace_h)]
         all_matrixes.append(added_items + copy.deepcopy(available_matrixes))
         added_items.append(item_matrix)
         available_matrixes.append(new_matrix_1)

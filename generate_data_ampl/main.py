@@ -39,7 +39,7 @@ if __name__ == '__main__':
   print(f'Ejecutado a las {start_date.strftime('%H:%M:%S')}')
 
   # Determinar el test a realizar
-  f_test = open(f'./tests/small/test1.txt', 'r')
+  f_test = open(f'./tests/medium/test5.txt', 'r')
   lines = f_test.readlines()
   ancho_original_str, largo_original_str = lines[0].split(',')
   ancho_original = int(ancho_original_str) # Ancho de la pieza original
@@ -173,13 +173,13 @@ if __name__ == '__main__':
   # Áreas de cada plato
   print('\n# Parámetro Area (Áreas)')
   f.writelines('\n# Parámetro Area (Áreas)\n')
-  for pieza in piezas_buscadas:
-    index = indice_pieza(pieza[0], pieza[1])
+  for index, pieza in enumerate(piezas):
     area = pieza[0] * pieza[1]
     print(f'param Area[{index}] {area};')
     f.writelines(f'param Area[{index}] {area};\n')
   
   end_date = datetime.now()
   elapsed_time = (end_date - start_date).seconds
+  print(f'Ejecutado a las {start_date.strftime('%H:%M:%S')}')
   print(f'Finalizado a las {end_date.strftime('%H:%M:%S')}')
   print(f'Elapsed time: {elapsed_time} seconds')

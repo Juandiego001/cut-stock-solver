@@ -22,7 +22,7 @@ def lectura(case: str):
     '''
 
     items = []
-    f = open(f'./cases/small/{case}.txt', 'r')
+    f = open(f'./cases/medium/{case}.txt', 'r')
     lineas_archivo = f.readlines()
     ancho_grande = int(lineas_archivo[0])
     largo_grande = int(lineas_archivo[1])
@@ -60,7 +60,7 @@ def generate_reports(report_folder, data):
 
     '''Escribir la solución inicial'''
     write_solution_info(wb_summary['SolInicial_Info'], sol_ini)
-    write_solution_debug(wb_summary['SolInicial_Debug'], sol_ini.matrixes)
+    # write_solution_debug(wb_summary['SolInicial_Debug'], sol_ini.matrixes)
 
     '''Escribir el resumen de las iteraciones'''
     for iter, fit_swap, fit_insertions, fit_2opt, best in vecinos_summary:
@@ -107,29 +107,29 @@ def generate_reports(report_folder, data):
         wb_2opt_iteration.save(f'{report_folder}/2opt/{iter}.xlsx')
         wb_2opt_iteration.close()
 
-        os.mkdir(f'{report_folder}/swap/{iter}')
-        for index, j in enumerate(all_vecinos_swap[i][0]):
-            wb_swap_iteration = create_sheets_iterations(iter)
-            write_solution_info(wb_swap_iteration['Info'], j)
-            write_solution_debug(wb_swap_iteration['Debug'], j.matrixes)
-            wb_swap_iteration.save(f'{report_folder}/swap/{iter}/{index}.xlsx')
-            wb_swap_iteration.close()
+        # os.mkdir(f'{report_folder}/swap/{iter}')
+        # for index, j in enumerate(all_vecinos_swap[i][0]):
+        #     wb_swap_iteration = create_sheets_iterations(iter)
+        #     write_solution_info(wb_swap_iteration['Info'], j)
+        #     write_solution_debug(wb_swap_iteration['Debug'], j.matrixes)
+        #     wb_swap_iteration.save(f'{report_folder}/swap/{iter}/{index}.xlsx')
+        #     wb_swap_iteration.close()
 
-        os.mkdir(f'{report_folder}/insertions/{iter}')
-        for index, j in enumerate(all_vecinos_insertions[i][0]):
-            wb_insertions_iteration = create_sheets_iterations(iter)
-            write_solution_info(wb_insertions_iteration['Info'], j)
-            write_solution_debug(wb_insertions_iteration['Debug'], j.matrixes)
-            wb_insertions_iteration.save(f'{report_folder}/insertions/{iter}/{index}.xlsx')
-            wb_insertions_iteration.close()
+        # os.mkdir(f'{report_folder}/insertions/{iter}')
+        # for index, j in enumerate(all_vecinos_insertions[i][0]):
+        #     wb_insertions_iteration = create_sheets_iterations(iter)
+        #     write_solution_info(wb_insertions_iteration['Info'], j)
+        #     write_solution_debug(wb_insertions_iteration['Debug'], j.matrixes)
+        #     wb_insertions_iteration.save(f'{report_folder}/insertions/{iter}/{index}.xlsx')
+        #     wb_insertions_iteration.close()
 
-        os.mkdir(f'{report_folder}/2opt/{iter}')
-        for index, j in enumerate(all_vecinos_2opt[i][0]):
-            wb_2opt_iteration = create_sheets_iterations(iter)
-            write_solution_info(wb_2opt_iteration['Info'], j)
-            write_solution_debug(wb_2opt_iteration['Debug'], j.matrixes)
-            wb_2opt_iteration.save(f'{report_folder}/2opt/{iter}/{index}.xlsx')
-            wb_2opt_iteration.close()
+        # os.mkdir(f'{report_folder}/2opt/{iter}')
+        # for index, j in enumerate(all_vecinos_2opt[i][0]):
+        #     wb_2opt_iteration = create_sheets_iterations(iter)
+        #     write_solution_info(wb_2opt_iteration['Info'], j)
+        #     write_solution_debug(wb_2opt_iteration['Debug'], j.matrixes)
+        #     wb_2opt_iteration.save(f'{report_folder}/2opt/{iter}/{index}.xlsx')
+        #     wb_2opt_iteration.close()
 
         iter += 1
 
