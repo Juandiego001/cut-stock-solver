@@ -7,7 +7,7 @@ from main import generate_solution, vecindario_2opt, vecindario_insertions, veci
 from gen_reports.gen_reports_excel import create_sheets_iterations, create_sheets_summary, write_iterations_summary, write_solution_debug, write_solution_info, write_solution_iteration_info, write_test_case
 
 
-cases_dir = 'cases'
+cases_dir = '../cases'
 
 
 def lectura(case: str):
@@ -22,21 +22,26 @@ def lectura(case: str):
     '''
 
     items = []
-    f = open(f'./cases/medium/{case}.txt', 'r')
+    f = open(f'../cases/{case}.txt', 'r')
     lineas_archivo = f.readlines()
-    ancho_grande = int(lineas_archivo[0])
-    largo_grande = int(lineas_archivo[1])
 
-    for line in lineas_archivo[2:]:
-        id, demanda, ancho, largo = line.split(',')
-        demanda.replace('\n', '')  # Se remueve el último salto de línea
+    ancho_original_str, largo_original_str = lineas_archivo[0].split(',')
+    ancho_original = int(ancho_original_str) # Ancho de la pieza original
+    largo_original = int(largo_original_str) # Largo de la pieza original
+
+    id = 1
+    for line in lineas_archivo[1:]:
+        demanda, ancho, largo = line.split(',')
+        # demanda.replace('\n', '')  # Se remueve el último salto de línea
 
         for i in range(int(demanda)):
             item = Item(int(id), int(demanda), int(ancho), int(largo))
             items.append(item)
 
+        id += 1
+
     f.close()
-    return ancho_grande, largo_grande, items
+    return ancho_original, largo_original, items
 
 
 def generate_reports(report_folder, data):
@@ -73,7 +78,7 @@ def generate_reports(report_folder, data):
 
     '''Escribir la solución'''
     write_solution_info(wb_summary['Solucion_Info'], mejor_solucion)
-    write_solution_debug(wb_summary['Solucion_Debug'], mejor_solucion.matrixes)
+    # write_solution_debug(wb_summary['Solucion_Debug'], mejor_solucion.matrixes)
 
     wb_summary.save(f'{report_folder}/{case}_summary.xlsx')
     wb_summary.close()
@@ -87,25 +92,25 @@ def generate_reports(report_folder, data):
     all_vecinos_insertions = iterations['all_vecinos_insertions']
     all_vecinos_2opt = iterations['all_vecinos_2opt']
 
-    for i, iter in enumerate(range(iterations['count'])):
+    # for i, iter in enumerate(range(iterations['count'])):
 
-        wb_swap_iteration = create_sheets_iterations(iter)
-        write_solution_iteration_info(
-            wb_swap_iteration['Info'], all_vecinos_swap[i][0])
-        wb_swap_iteration.save(f'{report_folder}/swap/{iter}.xlsx')
-        wb_swap_iteration.close()
+        # wb_swap_iteration = create_sheets_iterations(iter)
+        # write_solution_iteration_info(
+        #     wb_swap_iteration['Info'], all_vecinos_swap[i][0])
+        # wb_swap_iteration.save(f'{report_folder}/swap/{iter}.xlsx')
+        # wb_swap_iteration.close()
 
-        wb_insertions_iteration = create_sheets_iterations(iter)
-        write_solution_iteration_info(
-            wb_insertions_iteration['Info'], all_vecinos_insertions[i][0])
-        wb_insertions_iteration.save(f'{report_folder}/insertions/{iter}.xlsx')
-        wb_insertions_iteration.close()
+        # wb_insertions_iteration = create_sheets_iterations(iter)
+        # write_solution_iteration_info(
+        #     wb_insertions_iteration['Info'], all_vecinos_insertions[i][0])
+        # wb_insertions_iteration.save(f'{report_folder}/insertions/{iter}.xlsx')
+        # wb_insertions_iteration.close()
 
-        wb_2opt_iteration = create_sheets_iterations(iter)
-        write_solution_iteration_info(
-            wb_2opt_iteration['Info'], all_vecinos_2opt[i][0])
-        wb_2opt_iteration.save(f'{report_folder}/2opt/{iter}.xlsx')
-        wb_2opt_iteration.close()
+        # wb_2opt_iteration = create_sheets_iterations(iter)
+        # write_solution_iteration_info(
+        #     wb_2opt_iteration['Info'], all_vecinos_2opt[i][0])
+        # wb_2opt_iteration.save(f'{report_folder}/2opt/{iter}.xlsx')
+        # wb_2opt_iteration.close()
 
         # os.mkdir(f'{report_folder}/swap/{iter}')
         # for index, j in enumerate(all_vecinos_swap[i][0]):
@@ -131,7 +136,7 @@ def generate_reports(report_folder, data):
         #     wb_2opt_iteration.save(f'{report_folder}/2opt/{iter}/{index}.xlsx')
         #     wb_2opt_iteration.close()
 
-        iter += 1
+        # iter += 1
 
 
 def vns(report_folder, case, with_reports=True):
@@ -220,9 +225,6 @@ def vns(report_folder, case, with_reports=True):
 
 if __name__ == '__main__':
 
-    '''Tiempo inicial'''
-    start_date = datetime.now()
-
     '''Creación de carpeta de reporte'''
     date_now = str(datetime.now().replace(microsecond=0)
                    ).replace(' ', '_').replace(':', '_')
@@ -231,6 +233,9 @@ if __name__ == '__main__':
 
     single_or_multiple_cases = input('¿Ejecutar todos los casos? (Y/N): ')
     if single_or_multiple_cases == 'Y':
+        '''Tiempo inicial'''
+        start_date = datetime.now()
+
         all_processes = []
         for case_file in os.listdir(cases_dir):
             case = case_file.split('.')[0]
@@ -244,8 +249,11 @@ if __name__ == '__main__':
             each_process.join()
     else:
         case_file = input(
-            'Digite el nombre del caso que desea ejecutar (o dejar en blanco para test1): ')
-        case_file = 'test1' if not case_file else case_file
+            'Digite la ruta o el nombre del caso que desea ejecutar: ')
+        
+        '''Tiempo inicial'''
+        start_date = datetime.now()
+
         vns(report_folder, case_file)
 
     '''Tiempo final'''
