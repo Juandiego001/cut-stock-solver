@@ -26,7 +26,7 @@ def make_cut(id_item: int, ancho_item: int,
     El item ha completado todo el subespacio
     '''
     if new_subspace_h == 0 and new_subspace_w == 0:
-        all_matrixes.append(added_items + copy.deepcopy(available_matrixes))
+        # all_matrixes.append(added_items + copy.deepcopy(available_matrixes))
         added_items.append(item_matrix)
         del available_matrixes[index_selected_matrix]
         return
@@ -37,7 +37,7 @@ def make_cut(id_item: int, ancho_item: int,
     if new_subspace_h == 0:
         new_matrix_1 = [[0 for i in range(new_subspace_w)]
                         for j in range(largo_item)]
-        all_matrixes.append(added_items + copy.deepcopy(available_matrixes))
+        # all_matrixes.append(added_items + copy.deepcopy(available_matrixes))
         added_items.append(item_matrix)
         available_matrixes.append(new_matrix_1)
         del available_matrixes[index_selected_matrix]
@@ -49,7 +49,7 @@ def make_cut(id_item: int, ancho_item: int,
     if new_subspace_w == 0:
         new_matrix_1 = [[0 for i in range(ancho_item)]
                         for j in range(new_subspace_h)]
-        all_matrixes.append(added_items + copy.deepcopy(available_matrixes))
+        # all_matrixes.append(added_items + copy.deepcopy(available_matrixes))
         added_items.append(item_matrix)
         available_matrixes.append(new_matrix_1)
         del available_matrixes[index_selected_matrix]
@@ -60,7 +60,7 @@ def make_cut(id_item: int, ancho_item: int,
     new_matrix_2 = [[0 for i in range(new_subspace_w)]
                     for j in range(largo_item)]
 
-    all_matrixes.append(added_items + copy.deepcopy(available_matrixes))
+    # all_matrixes.append(added_items + copy.deepcopy(available_matrixes))
 
     available_matrixes.append(new_matrix_1)
     available_matrixes.append(new_matrix_2)
@@ -189,8 +189,8 @@ def generate_solution(ancho_grande, largo_grande, items: list[Item]) -> Solution
         ancho_eq_largo = item.ancho == item.largo
 
         '''
-    ¿Se debe incluir el item en el subespacio?
-    '''
+        ¿Se debe incluir el item en el subespacio?
+        '''
         incluir_item = False
 
         index_selected_matrix = -1
@@ -269,15 +269,15 @@ def generate_solution(ancho_grande, largo_grande, items: list[Item]) -> Solution
                             break
 
                         '''
-                  Fase posterior.
-                  Se rellena el item. Se completa el item para verificar si es posible ubicarlo.
-                  Validación inicial. len(matriz) - (j + 1) >= largo_item
-                  '''
+                        Fase posterior.
+                        Se rellena el item. Se completa el item para verificar si es posible ubicarlo.
+                        Validación inicial. len(matriz) - (j + 1) >= largo_item
+                        '''
                         largo_permitido = len(matrix) - primer_cero[1]
 
                         '''
-                  No se puede completar el item, intentar GIRANDOLO!
-                  '''
+                        No se puede completar el item, intentar GIRANDOLO!
+                        '''
                         if largo_permitido >= item.largo:
                             largo_completado, ultimo_cero = completar_x_ancho(
                                 matrix, primer_cero, ultimo_cero, item.ancho, item.largo)
@@ -300,15 +300,14 @@ def generate_solution(ancho_grande, largo_grande, items: list[Item]) -> Solution
                             break
 
                         '''
-                  Fase posterior.
-                  Se rellena el item. Se completa el item para verificar si es posible ubicarlo.
-                  Validación inicial. len(matriz) - (j + 1) >= largo_item
-                  '''
-                        largo_permitido = len(
-                            matrix) - (primer_cero[1] + 1)
+                        Fase posterior.
+                        Se rellena el item. Se completa el item para verificar si es posible ubicarlo.
+                        Validación inicial. len(matriz) - (j + 1) >= largo_item
                         '''
-                  No se puede completar el item, continuar con el siguiente
-                  '''
+                        largo_permitido = len(matrix) - primer_cero[1]
+                        '''
+                        No se puede completar el item, continuar con el siguiente
+                        '''
                         if largo_permitido < item.ancho:
                             break
                         ancho_completado, ultimo_cero = completar_x_ancho(
@@ -336,7 +335,7 @@ def generate_solution(ancho_grande, largo_grande, items: list[Item]) -> Solution
             make_cut(item.id, ancho_item, largo_item, index_selected_matrix,
                      ultimo_cero, available_matrixes, added_items, all_matrixes)
 
-    s.matrixes = all_matrixes
+    # s.matrixes = all_matrixes
 
     '''Calculo del desperdicio'''
     z_s = 0
@@ -378,7 +377,7 @@ def vecindario_swap(ancho_grande, largo_grande, items: list[Item]):
 
     for i in all_swaps:
         s_vecino = generate_solution(ancho_grande, largo_grande, i)
-        vecinos.append(copy.deepcopy(s_vecino))
+        # vecinos.append(copy.deepcopy(s_vecino))
 
         '''Actualizar mejor solución'''
         if s_vecino.fitness < best_fitness:
@@ -417,7 +416,7 @@ def vecindario_insertions(ancho_grande, largo_grande, items: list[Item]):
 
     for i in all_insertions:
         s_vecino = generate_solution(ancho_grande, largo_grande, i)
-        vecinos.append(copy.deepcopy(s_vecino))
+        # vecinos.append(copy.deepcopy(s_vecino))
 
         '''Actualizar mejor solución'''
         if s_vecino.fitness < best_fitness:
@@ -454,7 +453,7 @@ def vecindario_2opt(ancho_grande, largo_grande, items: list[Item]):
 
     for i in all_2opt:
         s_vecino = generate_solution(ancho_grande, largo_grande, i)
-        vecinos.append(copy.deepcopy(s_vecino))
+        # vecinos.append(copy.deepcopy(s_vecino))
 
         '''Actualizar mejor solución'''
         if s_vecino.fitness < best_fitness:

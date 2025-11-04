@@ -9,3 +9,5 @@ generate_data_ampl/tests
 .vscode
 reports_bottom_left
 v1/reports
+.env
+ampl_dat
