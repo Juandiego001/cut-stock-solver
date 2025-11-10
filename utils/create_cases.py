@@ -4,19 +4,7 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 from pydantic import BaseModel
-
-
-cases_dir = '../cases'
-
-format_indication = '''
-Digite el nombre del caso con el siguiente formato: ancho_largo_ocupacion.
-
-Ejemplo:
-- 55_55_84.
-- 63_78_91.
-- 61_28_95.
-                
-(Deje en blanco para terminar de agregar casos): '''
+from ..config import cases_dir, instruction_text_utils_create_case, enter_name_case_format_multiple, system_instruction
 
 
 class Triads(BaseModel):
@@ -25,39 +13,8 @@ class Triads(BaseModel):
     num_3: int
 
 
-system_instruction = '''You are a mathematics expert in generating multiple triads (minimum 3, maximum needed) that, whose products are summed together, get equal to a determined value.
-
-Below I provide you a series of examples:
-
-Example 1 (Target: 2500)
-
-5x10x10=500
-5x20x5=500
-5x25x4=500
-2x25x10=500
-
-Example 2 (Target: 2880)
-
-6x10x12=720
-8x9x10=720
-6x8x15=720
-4x10x18=720
-
-Example 3 (Target: 3240)
-
-5x10x20=1000
-5x8x25=1000
-4x5x50=1000
-3x8x10=240
-
-'''
-
-
 def cargar_configuracion():
-    """
-    Carga las variables de entorno desde un archivo .env
-    y verifica que las variables requeridas estén presentes.
-    """
+    '''Validar y cargar variables de entorno'''
 
     load_dotenv()
 
@@ -89,13 +46,13 @@ Ensure that the first number of each triad is the smallest, and avoid the triads
             response_mime_type='application/json',
             response_schema=list[Triads],
         ),
-        contents=contents,
+        contents=contents
     )
 
     return response.parsed
 
 
-def create_case(case_file: str):
+def create_case(client: genai.Client, case_file: str):
 
     print(f"Iniciando con: {case_file}")
     width, height, ocupation = case_file.split('_')
@@ -114,34 +71,48 @@ def create_case(case_file: str):
         print(f"[ERROR] No se pudo crear {nombre_archivo}: {e}")
 
 
-if __name__ == "__main__":
+def instruction_1(client: genai.Client):
+    '''Todos los casos'''
 
-    execution_mode = input('''
-¿Cómo desea ejecutar la generación de casos?
+    for case_file in os.listdir(cases_dir):
+        case = case_file.split('.')[0]
+        create_case(client, case)
 
-1- Todos los casos.
-2- Determinados casos.
-3- Un caso único.
 
-Ingrese un número: ''')
+def instruction_2(client: genai.Client):
+    '''Determinados casos'''
+
+    selected_cases = []
+    while True:
+        case_file = input(enter_name_case_format_multiple)
+        if case_file == '':
+            break
+        selected_cases.append(case_file)
+
+    for case_file in selected_cases:
+        create_case(client, case_file)
+
+
+def instruction_3(client: genai.Client):
+    '''Un caso único'''
+
+    case_file = input(enter_name_case_format_multiple)
+    create_case(client, case_file)
+
+
+def run():
+
+    instruction = input(instruction_text_utils_create_case)
+    if not instruction in ['1', '2', '3']:
+        print('Instrucción no encontrada ❌!')
+        return
 
     config = cargar_configuracion()
-    client = genai.Client(api_key=config['API_KEY'])
+    client: genai.Client = genai.Client(api_key=config['API_KEY'])
 
-    if execution_mode == '1':
-        for case_file in os.listdir(cases_dir):
-            create_case(case_file)
-    elif execution_mode == '2':
-        selected_cases = []
-        while True:
-            case_file = input(format_indication)
-
-            if case_file == '':
-                break
-            selected_cases.append(case_file)
-
-        for case_file in selected_cases:
-            create_case(case_file)
-    else:
-        case_file = input(format_indication)
-        create_case(case_file)
+    if instruction == '1':
+        instruction_1(client)
+    if instruction == '2':
+        instruction_2(client)
+    if instruction == '3':
+        instruction_3(client)

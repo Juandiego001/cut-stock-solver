@@ -6,7 +6,6 @@ from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 
 
-
 general_alignment = Alignment(horizontal='center', vertical='center')
 black_border = Border(left=Side(border_style='thin', color='FF000000'),
                       right=Side(border_style='thin', color='FF000000'),
@@ -294,7 +293,7 @@ def write_solution_info(ws, solution: Solution):
             ws[f'{c}{r}'].alignment = general_alignment
 
 
-def write_solution_debug(ws, matrixes):
+def write_solution_debug(ws: Worksheet, matrixes):
     '''Escribir el debug de la solución como tal'''
 
     # Change column widths

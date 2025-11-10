@@ -1,21 +1,11 @@
 import os
-
-
-cases_dir = '../cases'
+from ..config import cases_dir, instruction_text_utils_validate_cases, enter_name_case, enter_name_case_multiple
 
 
 def buscar_pieza(x, y, piezas):
     '''Busca si existe la pieza en la lista sin importar el orden'''
 
     return (x, y) in piezas or (y, x) in piezas
-
-
-def indice_pieza(x, y, piezas):
-    '''Retorna el índice de la pieza asumiendo que ya existe en la lista piezas'''
-
-    for i, (a, b) in enumerate(piezas):
-        if (a == x and b == y) or (a == y and b == x):
-            return i
 
 
 def validate_cases(case_file: str):
@@ -30,41 +20,54 @@ def validate_cases(case_file: str):
 
         if buscar_pieza(ancho, largo, piezas):
             print(f'¡Atención!')
-            print(f'La pieza {i} con dimensiones {int(ancho)} x {int(largo)} ya existía ❌.')
+            print(
+                f'La pieza {i} con dimensiones {int(ancho)} x {int(largo)} ya existía ❌.')
             return
 
         piezas.append((ancho, largo))
-    
+
     print('Todo correcto ✅')
 
 
-if __name__ == '__main__':
+def instruction_1():
+    '''Todos los casos'''
 
-    execution_mode = input('''
-¿Cómo desea ejecutar la validación de casos?
+    for case_file in os.listdir(cases_dir):
+        case = case_file.split('.')[0]
+        validate_cases(case)
 
-1- Todos los casos.
-2- Determinados casos.
-3- Un caso único.
 
-Ingrese un número: ''')
+def instruction_2():
+    '''Determinados casos'''
 
-    if execution_mode == '1':
-        for case_file in os.listdir(cases_dir):
-            validate_cases(case_file)
-    elif execution_mode == '2':
-        selected_cases = []
-        while True:
-            case_file = input(
-                'Digite la ruta o el nombre del caso que desea ejecutar (deje en blanco para terminar de seleccionar casos): ')
+    selected_cases = []
+    while True:
+        case_file = input(enter_name_case_multiple)
+        if case_file == '':
+            break
+        selected_cases.append(case_file)
 
-            if case_file == '':
-                break
-            selected_cases.append(case_file)
-
-        for case_file in selected_cases:
-            validate_cases(case_file)
-    else:
-        case_file = input(
-            'Digite la ruta o el nombre del caso que desea ejecutar: ')
+    for case_file in selected_cases:
         validate_cases(case_file)
+
+
+def instruction_3():
+    '''Un caso único'''
+
+    case_file = input(enter_name_case)
+    validate_cases(case_file)
+
+
+def run():
+
+    instruction = input(instruction_text_utils_validate_cases)
+    if not instruction in ['1', '2', '3']:
+        print('Instrucción no encontrada ❌!')
+        return
+
+    if instruction == '1':
+        instruction_1()
+    if instruction == '2':
+        instruction_2()
+    if instruction == '3':
+        instruction_3()

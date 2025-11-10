@@ -3,11 +3,7 @@ venv
 cases
 reports
 __pycache__
-data.dat
-generate_data_ampl/tests
+*.dat
 *.exe
 .vscode
-reports_bottom_left
-v1/reports
 .env
-ampl_dat

@@ -9,9 +9,10 @@ def make_cut(id_item: int, ancho_item: int,
              ultimo_cero: tuple[int, int],
              available_matrixes: list[list],
              added_items: list,
-             all_matrixes: list[list]):
+             all_matrixes: list[list],
+             debug: bool = False):
     '''
-    ultima_pos (2, 2) -> x: 2 y: 2
+    ultima_pos (x, y)
     '''
 
     matrix = available_matrixes[index_selected_matrix]
@@ -26,7 +27,9 @@ def make_cut(id_item: int, ancho_item: int,
     El item ha completado todo el subespacio
     '''
     if new_subspace_h == 0 and new_subspace_w == 0:
-        # all_matrixes.append(added_items + copy.deepcopy(available_matrixes))
+        if debug:
+            all_matrixes.append(
+                added_items + copy.deepcopy(available_matrixes))
         added_items.append(item_matrix)
         del available_matrixes[index_selected_matrix]
         return
@@ -37,7 +40,9 @@ def make_cut(id_item: int, ancho_item: int,
     if new_subspace_h == 0:
         new_matrix_1 = [[0 for i in range(new_subspace_w)]
                         for j in range(largo_item)]
-        # all_matrixes.append(added_items + copy.deepcopy(available_matrixes))
+        if debug:
+            all_matrixes.append(
+                added_items + copy.deepcopy(available_matrixes))
         added_items.append(item_matrix)
         available_matrixes.append(new_matrix_1)
         del available_matrixes[index_selected_matrix]
@@ -49,7 +54,9 @@ def make_cut(id_item: int, ancho_item: int,
     if new_subspace_w == 0:
         new_matrix_1 = [[0 for i in range(ancho_item)]
                         for j in range(new_subspace_h)]
-        # all_matrixes.append(added_items + copy.deepcopy(available_matrixes))
+        if debug:
+            all_matrixes.append(
+                added_items + copy.deepcopy(available_matrixes))
         added_items.append(item_matrix)
         available_matrixes.append(new_matrix_1)
         del available_matrixes[index_selected_matrix]
@@ -60,7 +67,8 @@ def make_cut(id_item: int, ancho_item: int,
     new_matrix_2 = [[0 for i in range(new_subspace_w)]
                     for j in range(largo_item)]
 
-    # all_matrixes.append(added_items + copy.deepcopy(available_matrixes))
+    if debug:
+        all_matrixes.append(added_items + copy.deepcopy(available_matrixes))
 
     available_matrixes.append(new_matrix_1)
     available_matrixes.append(new_matrix_2)
@@ -163,7 +171,7 @@ def ubicar_x_dimension(matrix: list[list], j: int, item: Item, dimension: int):
     return completado, primer_cero, ultimo_cero
 
 
-def generate_solution(ancho_grande, largo_grande, items: list[Item]) -> Solution:
+def generate_solution(ancho_grande, largo_grande, items: list[Item], debug: bool = False) -> Solution:
     '''Decode: Get solution'''
 
     s = Solution()
@@ -333,9 +341,10 @@ def generate_solution(ancho_grande, largo_grande, items: list[Item]) -> Solution
             available_matrixes[index_selected_matrix] = matrix
 
             make_cut(item.id, ancho_item, largo_item, index_selected_matrix,
-                     ultimo_cero, available_matrixes, added_items, all_matrixes)
+                     ultimo_cero, available_matrixes, added_items, all_matrixes, debug)
 
-    # s.matrixes = all_matrixes
+    if debug:
+        s.matrixes = all_matrixes
 
     '''Calculo del desperdicio'''
     z_s = 0
@@ -368,7 +377,7 @@ def swap_generation(items: list[Item]):
     return all_swaps
 
 
-def vecindario_swap(ancho_grande, largo_grande, items: list[Item]):
+def vecindario_swap(ancho_grande, largo_grande, items: list[Item], debug=False):
     '''Crear un vecindario a través del algoritmo swap'''
 
     best_fitness = sys.maxsize
@@ -377,7 +386,8 @@ def vecindario_swap(ancho_grande, largo_grande, items: list[Item]):
 
     for i in all_swaps:
         s_vecino = generate_solution(ancho_grande, largo_grande, i)
-        # vecinos.append(copy.deepcopy(s_vecino))
+        if debug:
+            vecinos.append(copy.deepcopy(s_vecino))
 
         '''Actualizar mejor solución'''
         if s_vecino.fitness < best_fitness:
@@ -407,7 +417,7 @@ def insertions_generation(items: list[Item]):
     return all_insertions
 
 
-def vecindario_insertions(ancho_grande, largo_grande, items: list[Item]):
+def vecindario_insertions(ancho_grande, largo_grande, items: list[Item], debug=False):
     '''Crear un vecindario a través del algoritmo insertions'''
 
     best_fitness = sys.maxsize
@@ -416,7 +426,8 @@ def vecindario_insertions(ancho_grande, largo_grande, items: list[Item]):
 
     for i in all_insertions:
         s_vecino = generate_solution(ancho_grande, largo_grande, i)
-        # vecinos.append(copy.deepcopy(s_vecino))
+        if debug:
+            vecinos.append(copy.deepcopy(s_vecino))
 
         '''Actualizar mejor solución'''
         if s_vecino.fitness < best_fitness:
@@ -444,7 +455,7 @@ def two_opt_generation(items: list[Item]):
     return all_2opt
 
 
-def vecindario_2opt(ancho_grande, largo_grande, items: list[Item]):
+def vecindario_2opt(ancho_grande, largo_grande, items: list[Item], debug=False):
     '''Crear un vecindario a través del algoritmo 2OPT'''
 
     best_fitness = sys.maxsize
@@ -453,7 +464,8 @@ def vecindario_2opt(ancho_grande, largo_grande, items: list[Item]):
 
     for i in all_2opt:
         s_vecino = generate_solution(ancho_grande, largo_grande, i)
-        # vecinos.append(copy.deepcopy(s_vecino))
+        if debug:
+            vecinos.append(copy.deepcopy(s_vecino))
 
         '''Actualizar mejor solución'''
         if s_vecino.fitness < best_fitness:

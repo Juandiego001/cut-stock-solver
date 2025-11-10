@@ -1,23 +1,10 @@
 import os
-
-
-cases_dir = '../cases'
+from ..config import cases_dir, instruction_text_utils_get_ocupation, enter_name_case, enter_name_case_multiple
 
 
 def get_ocupacion(the_case: str):
-    '''
-    Obtener la ocupación a partir de los casos de prueba
 
-    Consideraciones:
-    La primer línea del archivo corresponde al ancho.
-    La segunda línea del archivo corresponde al largo.
-    Las demás líneas corresponden a los ítems con el siguiente formato:
-    Id  Demanda Ancho Largo
-    '''
-
-    fixed_file = f'{the_case}.txt' if not 'txt' in the_case else the_case
-
-    f = open(f'../cases/{fixed_file}', 'r')
+    f = open(f'../cases/{the_case}.txt', 'r')
     lineas_archivo = f.readlines()
 
     ancho_original_str, largo_original_str = lineas_archivo[0].split(',')
@@ -25,7 +12,8 @@ def get_ocupacion(the_case: str):
     largo_original = int(largo_original_str)  # Largo de la pieza original
 
     area_total = ancho_original * largo_original
-    print(f'Ancho grande: {ancho_original} x Largo grande: {largo_original} = {area_total}')
+    print(
+        f'Ancho grande: {ancho_original} x Largo grande: {largo_original} = {area_total}')
 
     total_areas = 0
     lista_permutacion = 0
@@ -48,33 +36,45 @@ def get_ocupacion(the_case: str):
     f.close()
 
 
-if __name__ == '__main__':
+def instruction_1():
+    '''Todos los casos'''
 
-    execution_mode = input('''
-¿Cómo desea ejecutar la obtención de ocupación?
-
-1- Todos los casos.
-2- Determinados casos.
-3- Un caso único.
-
-Ingrese un número: ''')
+    for case_file in os.listdir(cases_dir):
+        case = case_file.split('.')[0]
+        get_ocupacion(case)
 
 
-    if execution_mode == '1':
-        for case_file in os.listdir(cases_dir):
-            get_ocupacion(case_file)
-    elif execution_mode == '2':
-        selected_cases = []
-        while True:
-          case_file = input(
-            'Digite la ruta o el nombre del caso que desea ejecutar (deje en blanco para terminar de seleccionar casos): ')
-          
-          if case_file == '': break
-          selected_cases.append(case_file)
-        
-        for case_file in selected_cases:
-            get_ocupacion(case_file)
-    else:
-        case_file = input(
-            'Digite la ruta o el nombre del caso que desea ejecutar: ')
+def instruction_2():
+    '''Determinados casos'''
+
+    selected_cases = []
+    while True:
+        case_file = input(enter_name_case_multiple)
+        if case_file == '':
+            break
+        selected_cases.append(case_file)
+
+    for case_file in selected_cases:
         get_ocupacion(case_file)
+
+
+def instruction_3():
+    '''Un caso único'''
+
+    case_file = input(enter_name_case)
+    get_ocupacion(case_file)
+
+
+def run():
+
+    instruction = input(instruction_text_utils_get_ocupation)
+    if not instruction in ['1', '2', '3']:
+        print('Instrucción no encontrada ❌!')
+        return
+
+    if instruction == '1':
+        instruction_1()
+    if instruction == '2':
+        instruction_2()
+    if instruction == '3':
+        instruction_3()

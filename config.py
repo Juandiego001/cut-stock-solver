@@ -1,17 +1,23 @@
 
-instruction_text_v2_run = '''
-¿Cómo desea ejecutar el algoritmo?
+ampl_data_dir = '../ampl_data'
+cases_dir = '../cases'
 
-1- Todos los casos (en paralelo).
-2- Todos los casos (secuencial).
-3- Determinados casos (en paralelo).
-4- Determinados casos (en secuencial).
-5- Un caso único.
+# Comunes
+enter_name_case = 'Digite el nombre del caso que desea ejecutar: '
+enter_name_case_multiple = 'Digite el nombre del caso que desea ejecutar (deje en blanco para terminar de seleccionar casos): '
+enter_name_case_format = '''
+Digite el nombre del caso que desea ejecutar en el siguiente formato:
 
-Ingrese un número: '''
+\tancho_largo_ocupacion
 
+Ejemplo:
 
-instruction_text_v2_instruction_3_4 = '''
+\t- 55_55_84
+\t- 60_60_80
+\t- 50_50_90
+
+Digite el nombre: '''
+enter_name_case_format_multiple = '''
 Digite el nombre del caso que desea ejecutar (deje en blanco para terminar de seleccionar casos): 
 
 \tancho_largo_ocupacion
@@ -25,15 +31,119 @@ Ejemplo:
 Digite el nombre: '''
 
 
-instruction_text_v2_instruction_5 = '''
-Digite el nombre del caso que desea ejecutar en el siguiente formato:
+instruction_text_main = '''
+Seleccione la opción que desea digitar:
+                     
+1- Ejecutar un caso con la heurística.
+2- Ejecutar un caso con AMPL.
+3- Generar .dat para AMPL.
+4- Generar un caso.
+5- Validar las demandas un caso.
+6- Obtener la ocupación de un caso.
 
-\tancho_largo_ocupacion
+Ingrese un número: '''
 
-Ejemplo:
 
-\t- 55_55_84
-\t- 60_60_80
-\t- 50_50_90
+instruction_text_v2_run = '''
+¿Cómo desea ejecutar el algoritmo?
 
-Digite el nombre: '''
+1- Todos los casos (en paralelo).
+2- Todos los casos (secuencial).
+3- Determinados casos (en paralelo).
+4- Determinados casos (en secuencial).
+5- Un caso único.
+
+Ingrese un número: '''
+
+instruction_text_v2_with_debug = '''
+¿Ejecutar casos con debug?
+
+1- Todos los casos.
+2- Determinados casos.
+3- Ningún caso.
+
+Ingrese un número: '''
+
+
+instruction_text_v2_with_debug_single = '''¿Ejecutar caso con debug? (y/n): '''
+
+
+instruction_text_ampl_generate = '''
+¿Cómo desea ejecutar el algoritmo?
+
+1- Todos los casos (en paralelo).
+2- Todos los casos (secuencial).
+3- Determinados casos (en paralelo).
+4- Determinados casos (en secuencial).
+5- Un caso único.
+
+Ingrese un número: '''
+
+
+instruction_text_utils_create_case = '''
+¿Cómo desea ejecutar la generación de casos?
+
+1- Todos los casos.
+2- Determinados casos.
+3- Un caso único.
+
+Ingrese un número: '''
+
+
+instruction_text_utils_validate_cases = '''
+¿Cómo desea ejecutar la validación de casos?
+
+1- Todos los casos.
+2- Determinados casos.
+3- Un caso único.
+
+Ingrese un número: '''
+
+
+instruction_text_utils_get_ocupation = '''
+¿Cómo desea ejecutar la obtención de ocupación?
+
+1- Todos los casos.
+2- Determinados casos.
+3- Un caso único.
+
+Ingrese un número: '''
+
+
+system_instruction = '''You are a mathematics expert in generating multiple triads (minimum 3, maximum needed) that, whose products are summed together, get equal to a determined value.
+
+Below I provide you a series of examples:
+
+Example 1 (Target: 2500)
+
+5x10x10=500
+5x20x5=500
+5x25x4=500
+2x25x10=500
+
+Example 2 (Target: 2880)
+
+6x10x12=720
+8x9x10=720
+6x8x15=720
+4x10x18=720
+
+Example 3 (Target: 3240)
+
+5x10x20=1000
+5x8x25=1000
+4x5x50=1000
+3x8x10=240
+
+'''
+
+instruction_text_ampl_run_case = '''
+¿Cómo desea ejecutar el caso con AMPL?
+
+1- Todos los casos.
+2- Determinados casos.
+3- Un caso único.
+
+Ingrese un número: '''
+
+ampl_run_file = 'run.run'

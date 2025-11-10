@@ -1,0 +1,31 @@
+
+reset;
+ 
+option omit_zero_cols 1;
+option omit_zero_rows 1;
+ 
+param t_inicio;
+param t_carga;
+param t_solve;
+
+param data_file_path symbolic;
+
+let t_inicio := _ampl_elapsed_time;
+model mod.mod;
+
+data (data_file_path);
+
+let t_carga := _ampl_elapsed_time - t_inicio;
+ 
+option solver cplex;
+option cplex_options 'timelimit=600 outlev=1 mipdisplay=2 timing=1';
+ 
+let t_inicio := _ampl_elapsed_time;
+solve;
+let t_solve := _ampl_elapsed_time - t_inicio;
+ 
+display z, X, Y, Inv, _ampl_elapsed_time;
+display t_carga, t_solve, t_carga + t_solve;
+display _ampl_elapsed_time, _ampl_system_time, _ampl_user_time, _ampl_time;
+display _total_solve_elapsed_time,_total_solve_system_time,_total_solve_user_time,_total_solve_time;
+display solve_result_num;
