@@ -1,7 +1,7 @@
 import os
 from amplpy import AMPL
 from pathlib import Path
-from ..config import ampl_data_dir, instruction_text_ampl_run_case, enter_name_case_format_multiple, ampl_run_file, enter_name_case_format
+from config import ampl_data_dir, instruction_text_ampl_run_case, enter_name_case_format_multiple, ampl_run_file, enter_name_case_format
 
 
 def ejecutar_modelo_ampl(data: str):
@@ -25,10 +25,11 @@ def ejecutar_modelo_ampl(data: str):
 
     try:
         ampl: AMPL = AMPL()
-        ampl.param["data_file_path"] = f'{ampl_data_dir}/{data}'
+        ampl.cd(ampl_data_dir)
+        ampl.eval("param data_file_path symbolic;")
+        ampl.param["data_file_path"] = os.path.join(ampl_data_dir, data)
         print(
             f"--- Ejecutando '{ampl_run_file}' con datos de '{data}' ---")
-
         ampl.read(f'{ampl_data_dir}/{ampl_run_file}')
 
         print("\n--- Resultados (extraídos en Python) ---")

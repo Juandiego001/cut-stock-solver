@@ -1,5 +1,5 @@
 import os
-from ..config import cases_dir, instruction_text_utils_validate_cases, enter_name_case, enter_name_case_multiple
+from config import cases_dir, instruction_text_utils_validate_cases, enter_name_case, enter_name_case_multiple
 
 
 def buscar_pieza(x, y, piezas):

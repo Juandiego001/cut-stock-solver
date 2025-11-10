@@ -15,7 +15,7 @@ a[o,k,q,j] p, parámetro binario o coeficiente binario que se define:
 '''
 import os
 from datetime import datetime
-from ..config import ampl_data_dir, cases_dir, instruction_text_ampl_generate
+from config import ampl_data_dir, cases_dir, instruction_text_ampl_generate, enter_name_case_format_multiple, enter_name_case
 from multiprocessing import Process
 
 
@@ -166,93 +166,79 @@ def generate_ampl_data(case_file: str, *args, **kwargs):
         f.writelines(f'param Area[{index}] {area};\n')
 
 
-def instruction_1():
-    '''Todos los casos (en paralelo)'''
+def parallel_execution(cases: list[str]):
+    '''Ejecución paralela'''
 
-    start_date = datetime.now()
     all_processes: list[Process] = []
-    for case_file in os.listdir(cases_dir):
-        case = case_file.split('.')[0]
-        p = Process(target=generate_ampl_data, args=(case))
+    for case in cases:
+        p = Process(target=generate_ampl_data, args=(case,))
         all_processes.append(p)
 
+    start_date = datetime.now()
     for each_process in all_processes:
         each_process.start()
-
     for each_process in all_processes:
         each_process.join()
-
     end_date = datetime.now()
     elapsed_time = (end_date - start_date).seconds
     print(f'Elapsed time: {elapsed_time} seconds')
+
+
+def sequential_execution(cases: list[str]):
+    '''Ejecución secuencial'''
+
+    for case in cases:
+        start_date = datetime.now()
+        generate_ampl_data(case)
+        end_date = datetime.now()
+        elapsed_time = (end_date - start_date).seconds
+        print(f'Elapsed time: {elapsed_time} seconds for case {case}')
+
+
+def get_cases():
+    '''Función para ir leyendo los casos ingresados por el usuario'''
+
+    cases = []
+    while True:
+        case_file = input(enter_name_case_format_multiple)
+        if case_file == '':
+            break
+        cases.append(case_file)
+    return cases
+
+
+def instruction_1():
+    '''Todos los casos (en paralelo)'''
+
+    cases = [case_file.split('.')[0] for case_file in os.listdir(cases_dir)]
+    parallel_execution(cases)
 
 
 def instruction_2():
     '''Todos los casos (secuencial)'''
 
-    for case_file in os.listdir(cases_dir):
-        case = case_file.split('.')[0]
-        start_date = datetime.now()
-        generate_ampl_data(case)
-        end_date = datetime.now()
-        elapsed_time = (end_date - start_date).seconds
-        print(f'Elapsed time: {elapsed_time} seconds for case {case_file}')
+    cases = [case_file.split('.')[0] for case_file in os.listdir(cases_dir)]
+    sequential_execution(cases)
 
 
 def instruction_3():
     '''Determinados casos (en paralelo)'''
 
-    start_date = datetime.now()
-    all_processes: list[Process] = []
-    selected_cases = []
-    while True:
-        case_file = input(
-            'Digite la ruta o el nombre del caso que desea ejecutar (deje en blanco para terminar de seleccionar casos): ')
-
-        if case_file == '':
-            break
-        selected_cases.append(case_file)
-
-    for case_file in selected_cases:
-        p = Process(target=generate_ampl_data, args=(case_file,))
-        all_processes.append(p)
-
-    for each_process in all_processes:
-        each_process.start()
-
-    for each_process in all_processes:
-        each_process.join()
-
-    end_date = datetime.now()
-    elapsed_time = (end_date - start_date).seconds
-    print(f'Elapsed time: {elapsed_time} seconds')
+    cases = get_cases()
+    parallel_execution(cases)
 
 
 def instruction_4():
     '''Determinados casos (en secuencial)'''
 
-    selected_cases = []
-    while True:
-        case_file = input(
-            'Digite la ruta o el nombre del caso que desea ejecutar (deje en blanco para terminar de seleccionar casos): ')
-
-        if case_file == '':
-            break
-        selected_cases.append(case_file)
-
-    for case_file in selected_cases:
-        start_date = datetime.now()
-        generate_ampl_data(case_file)
-        end_date = datetime.now()
-        elapsed_time = (end_date - start_date).seconds
-        print(f'Elapsed time: {elapsed_time} seconds for case {case_file}')
+    cases = get_cases()
+    sequential_execution(cases)
 
 
 def instruction_5():
     '''Un caso único'''
 
-    case_file = input(
-        'Digite la ruta o el nombre del caso que desea ejecutar: ')
+    case_file = input(enter_name_case)
     start_date = datetime.now()
     generate_ampl_data(case_file)
     end_date = datetime.now()

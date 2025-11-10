@@ -1,6 +1,10 @@
+import os
 
-ampl_data_dir = '../ampl_data'
-cases_dir = '../cases'
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+
+ampl_data_dir = os.path.join(PROJECT_ROOT, 'ampl_data')
+cases_dir = os.path.join(PROJECT_ROOT, 'cases')
+v2_reports_dir = os.path.join(PROJECT_ROOT, 'v2/reports')
 
 # Comunes
 enter_name_case = 'Digite el nombre del caso que desea ejecutar: '
@@ -8,27 +12,25 @@ enter_name_case_multiple = 'Digite el nombre del caso que desea ejecutar (deje e
 enter_name_case_format = '''
 Digite el nombre del caso que desea ejecutar en el siguiente formato:
 
-\tancho_largo_ocupacion
+--------- ancho_largo_ocupacion ---------
 
 Ejemplo:
-
-\t- 55_55_84
-\t- 60_60_80
-\t- 50_50_90
+- 55_55_84
+- 60_60_80
+- 50_50_90
 
 Digite el nombre: '''
 enter_name_case_format_multiple = '''
-Digite el nombre del caso que desea ejecutar (deje en blanco para terminar de seleccionar casos): 
+Digite el nombre del caso que desea ejecutar en el siguiente formato:
 
-\tancho_largo_ocupacion
+--------- ancho_largo_ocupacion ---------
 
 Ejemplo:
+- 55_55_84
+- 60_60_80
+- 50_50_90
 
-\t- 55_55_84
-\t- 60_60_80
-\t- 50_50_90
-
-Digite el nombre: '''
+Digite el nombre (deje en blanco para terminar de seleccionar casos): '''
 
 
 instruction_text_main = '''
@@ -55,21 +57,41 @@ instruction_text_v2_run = '''
 
 Ingrese un número: '''
 
-instruction_text_v2_with_debug = '''
-¿Ejecutar casos con debug?
+instruction_text_v2_report_type = '''
+¿Cómo desea generar los reportes?
 
-1- Todos los casos.
-2- Determinados casos.
-3- Ningún caso.
+1- Excel y debug: Todos los casos.
+2- Excel y debug: Determinados casos.
+3- Excel sin debug: Todos los casos.
+4- Excel sin debug: Determinados casos.
+5- Reporte mínimo de texto.
 
 Ingrese un número: '''
 
 
-instruction_text_v2_with_debug_single = '''¿Ejecutar caso con debug? (y/n): '''
+instruction_text_v2_report_type_single = '''
+¿Cómo desea generar el reporte?
+
+1- Excel y debug.
+2- Excel sin debug.
+3- Reporte mínimo de texto.
+
+Ingrese un número: '''
+
+
+instruction_text_v2_variant = '''
+¿Con cuál variante de permutación inicial desea ejecutar el algoritmo?
+
+1- Random.
+2- De mayor a menor.
+3- De menor a mayor.
+4- Sin modificaciones (por defecto).
+
+Ingrese un número: '''
 
 
 instruction_text_ampl_generate = '''
-¿Cómo desea ejecutar el algoritmo?
+¿Cómo desea generar la data de AMPL?
 
 1- Todos los casos (en paralelo).
 2- Todos los casos (secuencial).
@@ -83,7 +105,7 @@ Ingrese un número: '''
 instruction_text_utils_create_case = '''
 ¿Cómo desea ejecutar la generación de casos?
 
-1- Todos los casos.
+1- Todos los casos (que nada más estén creados en el directorio de cases).
 2- Determinados casos.
 3- Un caso único.
 

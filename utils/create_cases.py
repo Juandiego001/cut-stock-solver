@@ -4,7 +4,7 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from ..config import cases_dir, instruction_text_utils_create_case, enter_name_case_format_multiple, system_instruction
+from config import cases_dir, instruction_text_utils_create_case, enter_name_case_format_multiple, system_instruction
 
 
 class Triads(BaseModel):

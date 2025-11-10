@@ -1,6 +1,6 @@
 import sys
 import copy
-from classes import Item, Solution
+from .classes import Item, Solution
 
 
 def make_cut(id_item: int, ancho_item: int,

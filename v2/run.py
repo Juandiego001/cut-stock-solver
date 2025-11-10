@@ -3,14 +3,14 @@ import sys
 import copy
 import random
 from datetime import datetime
-from classes import Item, Solution
+from .classes import Item, Solution
 from multiprocessing import Process
-from main import generate_solution, vecindario_2opt, vecindario_insertions, vecindario_swap
-from ..config import cases_dir, instruction_text_v2_run, enter_name_case_format_multiple, cases_dir, enter_name_case_format_multiple, enter_name_case_format, instruction_text_v2_with_debug, instruction_text_v2_with_debug_single
-from gen_reports.gen_reports_excel import create_sheets_iterations, create_sheets_summary, write_iterations_summary, write_solution_debug, write_solution_info, write_solution_iteration_info, write_test_case
+from .main import generate_solution, vecindario_2opt, vecindario_insertions, vecindario_swap
+from config import cases_dir, v2_reports_dir, instruction_text_v2_run, enter_name_case_format_multiple, cases_dir, enter_name_case_format_multiple, enter_name_case_format, instruction_text_v2_report_type, instruction_text_v2_report_type_single, instruction_text_v2_variant
+from .gen_reports.gen_reports_excel import create_sheets_iterations, create_sheets_summary, write_iterations_summary, write_solution_debug, write_solution_info, write_solution_iteration_info, write_test_case
 
 
-def lectura(case: str):
+def lectura(case: str, variant: str):
     '''
     Lectura de cada archivo de caso.
 
@@ -26,7 +26,6 @@ def lectura(case: str):
     items = []
     f = open(f'{cases_dir}/{case}.txt', 'r')
     lineas_archivo = f.readlines()
-
     ancho_base, largo_base = lineas_archivo[0].split(',')
 
     for line in lineas_archivo[1:]:
@@ -36,26 +35,32 @@ def lectura(case: str):
             items.append(item)
 
     f.close()
-    # random.shuffle(items) # Random
-    # items = sorted(items, key=lambda item: item.ancho * item.largo, reverse=True) # De mayor a menor
-    items = sorted(items, key=lambda item: item.ancho *
-                   item.largo, reverse=False)  # De menor a mayor
+
+    if variant == '1':
+        random.shuffle(items)  # Random
+    if variant == '2':
+        items = sorted(items, key=lambda item: item.ancho *
+                       item.largo, reverse=True)  # De mayor a menor
+    if variant == '3':
+        items = sorted(items, key=lambda item: item.ancho *
+                       item.largo, reverse=False)  # De menor a mayor
+
     return int(ancho_base), int(largo_base), items
 
 
-def generate_reports(report_folder,
-                     case,
-                     ancho_grande,
-                     largo_grande,
-                     items,
-                     sol_ini: Solution,
-                     vecinos_summary,
-                     mejor_solucion: Solution,
-                     iterations,
-                     all_vecinos_swap,
-                     all_vecinos_insertions,
-                     all_vecinos_2opt,
-                     debug=False):
+def generate_excel_report(report_folder,
+                          case,
+                          ancho_grande,
+                          largo_grande,
+                          items,
+                          sol_ini: Solution,
+                          vecinos_summary,
+                          mejor_solucion: Solution,
+                          iterations,
+                          all_vecinos_swap,
+                          all_vecinos_insertions,
+                          all_vecinos_2opt,
+                          debug=False):
     '''Generar reportes de excel'''
 
     wb_summary = create_sheets_summary()
@@ -87,10 +92,6 @@ def generate_reports(report_folder,
 
     wb_summary.save(f'{report_folder}/{case}_summary.xlsx')
     wb_summary.close()
-
-    # with open('output.txt', 'a') as archivo:
-    #     archivo.write(
-    #         f'\n{case}:\tDesperdicio:\t{mejor_solucion.desperdicio}\tFitness:\t{mejor_solucion.fitness}')
 
     '''Escribir el detalle de las iteraciones'''
     if debug:
@@ -150,17 +151,35 @@ def generate_reports(report_folder,
             iter += 1
 
 
-def vns(report_folder: str, case: str, debug: bool = False):
-    '''Función de búsqueda local'''
+def generate_text_report(report_folder: str, case: str, mejor_solucion: Solution):
+    '''Generar reporte de texto simple'''
 
-    report_folder = f'{report_folder}/{case}'
-    os.mkdir(report_folder)
-    ancho_grande, largo_grande, items = lectura(case)
+    with open(f'{report_folder}/{case}.txt', 'w+') as archivo:
+        archivo.write(
+            f'Caso {case}\nDesperdicio:\t{mejor_solucion.desperdicio}\nFitness:\t\t{mejor_solucion.fitness}')
+
+
+def vns(report_folder: str, case: str, variant: str, report_type: str = 'TXT'):
+    '''Función de búsqueda local
+
+    Report type.
+    EXCEL_AND_DEBUG: Con excel y debug.
+    EXCEL: Con excel sin debug.
+    TXT: Reporte mínimo en texto.
+    '''
+
+    with_excel = report_type in ['EXCEL_AND_DEBUG', 'EXCEL']
+    with_excel_and_debug = report_type == 'EXCEL_AND_DEBUG'
+
+    ancho_grande, largo_grande, items = lectura(case, variant)
     sol_ini = generate_solution(ancho_grande, largo_grande, items)
     mejor_vecino = mejor_solucion = copy.deepcopy(sol_ini)
 
     vecinos_summary = []
-    if debug:
+    if with_excel_and_debug:
+        report_folder = f'{report_folder}/{case}'
+        os.mkdir(report_folder)
+
         all_vecinos_swap = []
         all_vecinos_insertions = []
         all_vecinos_2opt = []
@@ -168,18 +187,20 @@ def vns(report_folder: str, case: str, debug: bool = False):
     iterations = 1
     while True:
         mejor_vecino_swap, vecinos_swap = vecindario_swap(
-            ancho_grande, largo_grande, mejor_solucion.permutation, debug)
+            ancho_grande, largo_grande, mejor_solucion.permutation, with_excel_and_debug)
         mejor_vecino_insertions, vecinos_insertions = vecindario_insertions(
-            ancho_grande, largo_grande, mejor_solucion.permutation, debug)
+            ancho_grande, largo_grande, mejor_solucion.permutation, with_excel_and_debug)
         mejor_vecino_2opt, vecinos_2opt = vecindario_2opt(
-            ancho_grande, largo_grande, mejor_solucion.permutation, debug)
+            ancho_grande, largo_grande, mejor_solucion.permutation, with_excel_and_debug)
 
-        vecinos_summary.append((iterations,
-                                mejor_vecino_swap.fitness,
-                                mejor_vecino_insertions.fitness,
-                                mejor_vecino_2opt.fitness,
-                                mejor_solucion.fitness))
-        if debug:
+        if with_excel:
+            vecinos_summary.append((iterations,
+                                    mejor_vecino_swap.fitness,
+                                    mejor_vecino_insertions.fitness,
+                                    mejor_vecino_2opt.fitness,
+                                    mejor_solucion.fitness))
+
+        if with_excel_and_debug:
             all_vecinos_swap.append((vecinos_swap, iterations))
             all_vecinos_insertions.append((vecinos_insertions, iterations))
             all_vecinos_2opt.append((vecinos_2opt, iterations))
@@ -200,49 +221,73 @@ def vns(report_folder: str, case: str, debug: bool = False):
         iterations += 1
 
     print(f'Case {case}, iterations: {iterations}')
-    generate_reports(report_folder=report_folder,
-                     case=case,
-                     ancho_grande=ancho_grande,
-                     largo_grande=largo_grande,
-                     items=items,
-                     sol_ini=sol_ini,
-                     vecinos_summary=vecinos_summary,
-                     mejor_solucion=mejor_solucion,
-                     iterations=iterations,
-                     all_vecinos_swap=all_vecinos_swap,
-                     all_vecinos_insertions=all_vecinos_insertions,
-                     all_vecinos_2opt=all_vecinos_2opt,
-                     debug=debug)
+
+    if with_excel:
+        generate_excel_report(
+            report_folder=report_folder,
+            case=case,
+            ancho_grande=ancho_grande,
+            largo_grande=largo_grande,
+            items=items,
+            sol_ini=sol_ini,
+            vecinos_summary=vecinos_summary,
+            mejor_solucion=mejor_solucion,
+            iterations=iterations,
+            all_vecinos_swap=all_vecinos_swap,
+            all_vecinos_insertions=all_vecinos_insertions,
+            all_vecinos_2opt=all_vecinos_2opt,
+            debug=with_excel_and_debug)
+    else:
+        generate_text_report(report_folder, case, mejor_solucion)
 
 
-def case_debug(instruction: str, case: str):
-    '''Procesa los casos para debug'''
+def get_report_type(instruction: str):
+    '''Determina el tipo de reporte a generar'''
+
+    if instruction in ['1', '2']:
+        return 'EXCEL_AND_DEBUG'
+
+    if instruction in ['3', '4']:
+        return 'EXCEL'
+
+    if instruction == '5':
+        return 'TXT'
+
+    return 'TXT'
+
+
+def get_report_type_single(instruction: str):
+    '''Determina el tipo de reporte a generar para la instrucción 5'''
 
     if instruction == '1':
-        return True
+        return 'EXCEL_AND_DEBUG'
     if instruction == '2':
-        return input(f'¿Ejecutar caso {case} con debug? (y/N): ').upper() == 'Y'
-    return False
+        return 'EXCEL'
+    if instruction == '3':
+        return 'TXT'
+
+    return 'TXT'
 
 
-def check_debug():
-    '''Verifica la ejecución con debug'''
+def check_report_type():
+    '''Obtiene del usuario el tipo de reporte a generar deseado'''
 
-    instruction = input(instruction_text_v2_with_debug)
-    if not instruction in ['1', '2', '3']:
+    instruction = input(instruction_text_v2_report_type)
+    if not instruction in ['1', '2', '3', '4', '5']:
         print('Instrucción no encontrada ❌!')
         sys.exit(1)
 
     return instruction
 
 
-def parallel_execution(report_folder: str, cases: list[str], debug_instruction: str):
+def parallel_execution(report_folder: str, cases: list[str], variant_instruction: str, report_type_instruction: str):
     '''Ejecución paralela'''
 
     all_processes: list[Process] = []
     for case in cases:
-        with_debug = case_debug(debug_instruction, case)
-        p = Process(target=vns, args=(report_folder, case, with_debug))
+        report_type = get_report_type(report_type_instruction)
+        p = Process(target=vns, args=(report_folder, case,
+                    variant_instruction, report_type))
         all_processes.append(p)
 
     start_date = datetime.now()
@@ -255,13 +300,13 @@ def parallel_execution(report_folder: str, cases: list[str], debug_instruction: 
     print(f'Elapsed time: {elapsed_time} seconds')
 
 
-def sequential_execution(report_folder: str, cases: list[str], debug_instruction: str):
+def sequential_execution(report_folder: str, cases: list[str], variant_instruction: str, report_type_instruction: str):
     '''Ejecución secuencial'''
 
     for case in cases:
-        with_debug = case_debug(debug_instruction, case)
+        report_type = get_report_type(report_type_instruction)
         start_date = datetime.now()
-        vns(report_folder, case, with_debug)
+        vns(report_folder, case, variant_instruction, report_type)
         end_date = datetime.now()
         elapsed_time = (end_date - start_date).seconds
         print(f'Elapsed time: {elapsed_time} seconds for case {case}')
@@ -279,69 +324,94 @@ def get_cases():
     return cases
 
 
-def instruction_1(report_folder: str):
+def instruction_1(report_folder: str, variant_instruction: str, report_type_instruction: str):
     '''Todos los casos (en paralelo)'''
 
-    instruction = check_debug()
     cases = [case_file.split('.')[0] for case_file in os.listdir(cases_dir)]
-    parallel_execution(report_folder, cases, instruction)
+    parallel_execution(report_folder, cases,
+                       variant_instruction, report_type_instruction)
 
 
-def instruction_2(report_folder: str):
+def instruction_2(report_folder: str, variant_instruction: str, report_type_instruction: str):
     '''Todos los casos (secuencial)'''
 
-    instruction = check_debug()
     cases = [case_file.split('.')[0] for case_file in os.listdir(cases_dir)]
-    sequential_execution(report_folder, cases, instruction)
+    sequential_execution(report_folder, cases,
+                         variant_instruction, report_type_instruction)
 
 
-def instruction_3(report_folder: str):
+def instruction_3(report_folder: str, variant_instruction: str, report_type_instruction: str):
     '''Determinados casos (en paralelo)'''
 
-    instruction = check_debug()
     cases = get_cases()
-    parallel_execution(report_folder, cases, instruction)
+    parallel_execution(report_folder, cases,
+                       variant_instruction, report_type_instruction)
 
 
-def instruction_4(report_folder: str):
+def instruction_4(report_folder: str, variant_instruction: str, report_type_instruction: str):
     '''Determinados casos (en secuencial)'''
 
-    instruction = check_debug()
     cases = get_cases()
-    sequential_execution(report_folder, cases, instruction)
+    sequential_execution(report_folder, cases,
+                         variant_instruction, report_type_instruction)
 
 
-def instruction_5(report_folder: str):
+def instruction_5(report_folder: str, case_file: str, variant_instruction: str, report_type_instruction: str):
     '''Un caso único'''
 
-    case_file = input(enter_name_case_format)
-    with_debug = input(instruction_text_v2_with_debug_single).upper() == 'Y'
     start_date = datetime.now()
-    vns(report_folder, case_file, with_debug)
+    vns(report_folder, case_file, variant_instruction, report_type_instruction)
     end_date = datetime.now()
     elapsed_time = (end_date - start_date).seconds
     print(f'Elapsed time: {elapsed_time} seconds')
 
 
-def run():
+def get_user_instructions():
+    '''Obtener indicaciones sobre cómo ejecutar el script'''
 
     instruction = input(instruction_text_v2_run)
     if not instruction in ['1', '2', '3', '4', '5']:
         print('Instrucción no encontrada ❌!')
         return
 
+    if instruction in ['1', '2', '3', '4']:
+        report_type_instruction = check_report_type()
+    else:
+        report_type_instruction = get_report_type_single(
+            input(instruction_text_v2_report_type_single))
+
+    variant_instruction = input(instruction_text_v2_variant)
+    if not variant_instruction in ['1', '2', '3']:
+        print('Instrucción no encontrada ❌!')
+        return
+
+    case_file = None
+    if instruction == '5':
+        case_file = input(enter_name_case_format)
+
+    return instruction, report_type_instruction, variant_instruction, case_file
+
+
+def run():
+
+    instruction, report_type_instruction, variant_instruction, case_file = get_user_instructions()
     date_now = str(datetime.now().replace(microsecond=0)
                    ).replace(' ', '_').replace(':', '_')
-    report_folder = f'./reports/report_{date_now}'
+    report_folder = f'{v2_reports_dir}/report_{date_now}'
     os.mkdir(report_folder)
 
     if instruction == '1':
-        instruction_1(report_folder)
+        instruction_1(report_folder, variant_instruction,
+                      report_type_instruction)
     if instruction == '2':
-        instruction_2(report_folder)
+        instruction_2(report_folder, variant_instruction,
+                      report_type_instruction)
     if instruction == '3':
-        instruction_3(report_folder)
+        instruction_3(report_folder, variant_instruction,
+                      report_type_instruction)
     if instruction == '4':
-        instruction_4(report_folder)
+        instruction_4(report_folder, variant_instruction,
+                      report_type_instruction)
     if instruction == '5':
-        instruction_5(report_folder)
+        instruction_5(report_folder, case_file,
+                      variant_instruction, report_type_instruction)

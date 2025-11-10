@@ -1,10 +1,10 @@
 import os
-from ..config import cases_dir, instruction_text_utils_get_ocupation, enter_name_case, enter_name_case_multiple
+from config import cases_dir, instruction_text_utils_get_ocupation, enter_name_case, enter_name_case_multiple
 
 
 def get_ocupacion(the_case: str):
 
-    f = open(f'../cases/{the_case}.txt', 'r')
+    f = open(f'{cases_dir}/{the_case}.txt', 'r')
     lineas_archivo = f.readlines()
 
     ancho_original_str, largo_original_str = lineas_archivo[0].split(',')

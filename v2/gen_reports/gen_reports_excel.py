@@ -1,5 +1,5 @@
 import random
-from classes import Solution
+from ..classes import Solution
 from openpyxl import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.utils import get_column_letter
