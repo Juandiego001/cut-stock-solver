@@ -15,7 +15,7 @@ a[o,k,q,j] p, parámetro binario o coeficiente binario que se define:
 '''
 import os
 from datetime import datetime
-from config import ampl_data_dir, cases_dir, instruction_text_ampl_generate, enter_name_case_format_multiple, enter_name_case
+from config import ampl_data_dir, cases_dir, instruction_text_ampl_generate, enter_name_case_multiple, enter_name_case
 from multiprocessing import Process
 
 
@@ -200,7 +200,7 @@ def get_cases():
 
     cases = []
     while True:
-        case_file = input(enter_name_case_format_multiple)
+        case_file = input(enter_name_case_multiple)
         if case_file == '':
             break
         cases.append(case_file)

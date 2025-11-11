@@ -14,15 +14,27 @@ def validate_cases(case_file: str):
     f_test = open(f'{cases_dir}/{case_file}.txt', 'r')
     lines = f_test.readlines()
 
+    ancho_base, largo_base = lines[0].split(',')
+    ancho_base, largo_base = int(ancho_base), int(largo_base)
+
     piezas = []
     for i in range(1, len(lines)):
-        _, ancho, largo = lines[i].replace('\n', '').split(',')
-        # print(f'Ancho: {ancho} Largo: {largo}')
+        _, ancho, largo = lines[i].split(',')
+        ancho = int(ancho)
+        largo = int(largo)
 
         if buscar_pieza(ancho, largo, piezas):
-            print(f'¡Atención!')
             print(
-                f'La pieza {i} con dimensiones {int(ancho)} x {int(largo)} ya existía ❌.')
+                f'¡Atención! La pieza {i} con dimensiones {int(ancho)} x {int(largo)} ya existía ❌')
+            return
+
+        if (ancho > ancho_base) and (ancho > largo_base):
+            print(
+                f'¡Atención! La pieza {i} tiene la dimensión del ancho "{ancho}" mayor que las dimensiones base ❌')
+            return
+        if (largo > ancho_base) and (largo > largo_base):
+            print(
+                f'¡Atención! La pieza {i} tiene la dimensión del largo "{largo}" mayor que las dimensiones base ❌')
             return
 
         piezas.append((ancho, largo))

@@ -2,7 +2,7 @@ import os
 from amplpy import AMPL
 from pathlib import Path
 from datetime import datetime
-from config import ampl_data_dir, instruction_text_ampl_run_case, enter_name_case_format_multiple, ampl_run_file, enter_name_case_format, ampl_run_cases_reports_dir
+from config import ampl_data_dir, instruction_text_ampl_run_case, enter_name_case_multiple, ampl_run_file, enter_name_case, ampl_run_cases_reports_dir
 
 
 def save_report(report_folder: str,
@@ -93,7 +93,7 @@ def instruction_2(report_folder: str):
 
     selected_cases = []
     while True:
-        case_file = input(enter_name_case_format_multiple)
+        case_file = input(enter_name_case_multiple)
         if case_file == '':
             break
         selected_cases.append(case_file)
@@ -104,7 +104,7 @@ def instruction_2(report_folder: str):
 def instruction_3(report_folder: str):
     '''Un caso único'''
 
-    case_file = input(enter_name_case_format)
+    case_file = input(enter_name_case)
     ejecutar_modelo_ampl(report_folder, case_file)
 
 

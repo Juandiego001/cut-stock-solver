@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from .with_gemini import create_case as create_case_gemini
 from .with_ollama import create_case as create_case_ollama
 from .with_openai import create_case as create_case_openai
-from config import cases_dir, instruction_text_utils_create_case, enter_name_case_format_multiple, instruction_text_utils_create_case_ai_instruction
+from config import cases_dir, instruction_text_utils_create_case, enter_name_case_multiple, instruction_text_utils_create_case_ai_instruction
 
 
 def invalid_env(missin_env: str):
@@ -59,7 +59,7 @@ def instruction_2(client: genai.Client | Client | OpenAI, create_case: function)
 
     selected_cases = []
     while True:
-        case_file = input(enter_name_case_format_multiple)
+        case_file = input(enter_name_case_multiple)
         if case_file == '':
             break
         selected_cases.append(case_file)
@@ -71,7 +71,7 @@ def instruction_2(client: genai.Client | Client | OpenAI, create_case: function)
 def instruction_3(client: genai.Client | Client | OpenAI, create_case: function):
     '''Un caso único'''
 
-    case_file = input(enter_name_case_format_multiple)
+    case_file = input(enter_name_case_multiple)
     create_case(client, case_file)
 
 

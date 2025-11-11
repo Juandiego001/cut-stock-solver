@@ -10,28 +10,6 @@ ampl_run_cases_reports_dir = os.path.join(PROJECT_ROOT, 'ampl/reports')
 # Comunes
 enter_name_case = 'Digite el nombre del caso que desea ejecutar: '
 enter_name_case_multiple = 'Digite el nombre del caso que desea ejecutar (deje en blanco para terminar de seleccionar casos): '
-enter_name_case_format = '''
-Digite el nombre del caso que desea ejecutar en el siguiente formato:
-
---------- ancho_largo_ocupacion ---------
-
-Ejemplo:
-- 55_55_84
-- 60_60_80
-- 50_50_90
-
-Digite el nombre: '''
-enter_name_case_format_multiple = '''
-Digite el nombre del caso que desea ejecutar en el siguiente formato:
-
---------- ancho_largo_ocupacion ---------
-
-Ejemplo:
-- 55_55_84
-- 60_60_80
-- 50_50_90
-
-Digite el nombre (deje en blanco para terminar de seleccionar casos): '''
 
 
 instruction_text_main = '''
@@ -169,6 +147,37 @@ Example 3 (Target: 3240)
 3x8x10=240
 
 '''
+
+
+system_instruction_ollama = '''
+You are a mathematics expert generating multiple triads $(a, b, c)$ that fulfill a set of rules.
+
+Your task is to generate a set of triads whose product $(a x b x c)$, when summed, is closest to a target value.
+
+Below are examples:
+
+### Example 1 (Target: 2500)
+$10 x 10 x 10 = 1000$
+$5 x 10 x 20 = 1000$
+$5 x 10 x 10 = 500$
+Total Sum: $1000 + 1000 + 500 = 2500$
+
+### Example 2 (Target: 2880)
+$6 x 10 x 12 = 720$
+$8 x 9 x 10 = 720$
+$6 x 8 x 15 = 720$
+$4 x 10 x 18 = 720$
+Total Sum: $720 + 720 + 720 + 720 = 2880$
+
+### Example 3 (Target: 3240)
+$5 x 10 x 20 = 1000$
+$5 x 8 x 25 = 1000$
+$4 x 5 x 50 = 1000$
+$3 x 8 x 10 = 240$
+Total Sum: $1000 + 1000 + 1000 + 240 = 3240$
+
+Note that the product of EACH individual triad does NOT have to be the target value; rather, the SUM of all products must be the target value.'''
+
 
 instruction_text_ampl_run_case = '''
 ¿Cómo desea ejecutar el caso con AMPL?

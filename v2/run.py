@@ -6,7 +6,7 @@ from datetime import datetime
 from .classes import Item, Solution
 from multiprocessing import Process
 from .main import generate_solution, vecindario_2opt, vecindario_insertions, vecindario_swap
-from config import cases_dir, v2_reports_dir, instruction_text_v2_run, enter_name_case_format_multiple, cases_dir, enter_name_case_format_multiple, enter_name_case_format, instruction_text_v2_report_type, instruction_text_v2_report_type_single, instruction_text_v2_variant
+from config import cases_dir, v2_reports_dir, instruction_text_v2_run, enter_name_case_multiple, cases_dir, enter_name_case, instruction_text_v2_report_type, instruction_text_v2_report_type_single, instruction_text_v2_variant
 from .gen_reports.gen_reports_excel import create_sheets_iterations, create_sheets_summary, write_iterations_summary, write_solution_debug, write_solution_info, write_solution_iteration_info, write_test_case
 
 
@@ -154,22 +154,22 @@ def generate_excel_report(report_folder,
             iter += 1
 
 
-def generate_text_report(report_folder: str, case: str, mejor_solucion: Solution):
+def generate_text_report(report_folder: str, case: str, elapsed_time: float, mejor_solucion: Solution):
     '''Generar reporte de texto simple'''
 
     if not os.path.exists(f'{report_folder}/summary.txt'):
         with open(f'{report_folder}/summary.txt', 'a+') as archivo:
             archivo.write(
-                f'Caso\t\t|\tDesperdicio\t|\tFitness\n-------------------------------------------\n')
+                f'Caso\t\t|\tTiempo\t\t|\tDesperdicio\t|\tFitness\n{"-"*60}\n')
 
     if mejor_solucion.desperdicio > 999:
         with open(f'{report_folder}/summary.txt', 'a+') as archivo:
             archivo.write(
-                f'{case}\t|\t{mejor_solucion.desperdicio}\t\t|\t{mejor_solucion.fitness}\n')
+                f'{case}\t|\t{elapsed_time}\t\t\t|\t{mejor_solucion.desperdicio}\t\t|\t{mejor_solucion.fitness}\n')
     else:
         with open(f'{report_folder}/summary.txt', 'a+') as archivo:
             archivo.write(
-                f'{case}\t|\t{mejor_solucion.desperdicio}\t\t\t|\t{mejor_solucion.fitness}\n')
+                f'{case}\t|\t{elapsed_time}\t\t\t|\t{mejor_solucion.desperdicio}\t\t\t|\t{mejor_solucion.fitness}\n')
 
 
 def vns(report_folder: str, case: str, variant: str, report_type: str = 'TXT'):
@@ -181,6 +181,7 @@ def vns(report_folder: str, case: str, variant: str, report_type: str = 'TXT'):
     TXT: Reporte mínimo en texto.
     '''
 
+    start_date = datetime.now()
     with_excel = report_type in ['EXCEL_AND_DEBUG', 'EXCEL']
     with_excel_and_debug = report_type == 'EXCEL_AND_DEBUG'
 
@@ -234,6 +235,8 @@ def vns(report_folder: str, case: str, variant: str, report_type: str = 'TXT'):
         iterations += 1
 
     print(f'Case {case}, iterations: {iterations}')
+    end_date = datetime.now()
+    elapsed_time: float = (end_date - start_date).seconds
 
     if with_excel:
         generate_excel_report(
@@ -251,7 +254,7 @@ def vns(report_folder: str, case: str, variant: str, report_type: str = 'TXT'):
             all_vecinos_2opt=all_vecinos_2opt,
             debug=with_excel_and_debug)
     else:
-        generate_text_report(report_folder, case, mejor_solucion)
+        generate_text_report(report_folder, case, elapsed_time, mejor_solucion)
 
 
 def get_report_type(instruction: str):
@@ -303,14 +306,10 @@ def parallel_execution(report_folder: str, cases: list[str], variant_instruction
                     variant_instruction, report_type))
         all_processes.append(p)
 
-    start_date = datetime.now()
     for each_process in all_processes:
         each_process.start()
     for each_process in all_processes:
         each_process.join()
-    end_date = datetime.now()
-    elapsed_time = (end_date - start_date).seconds
-    print(f'Elapsed time: {elapsed_time} seconds')
 
 
 def sequential_execution(report_folder: str, cases: list[str], variant_instruction: str, report_type_instruction: str):
@@ -318,11 +317,9 @@ def sequential_execution(report_folder: str, cases: list[str], variant_instructi
 
     for case in cases:
         report_type = get_report_type(report_type_instruction)
-        start_date = datetime.now()
         vns(report_folder, case, variant_instruction, report_type)
-        end_date = datetime.now()
-        elapsed_time = (end_date - start_date).seconds
-        print(f'Elapsed time: {elapsed_time} seconds for case {case}')
+
+    print(f'Finished execution.')
 
 
 def get_cases():
@@ -330,7 +327,7 @@ def get_cases():
 
     cases = []
     while True:
-        case_file = input(enter_name_case_format_multiple)
+        case_file = input(enter_name_case_multiple)
         if case_file == '':
             break
         cases.append(case_file)
@@ -372,11 +369,8 @@ def instruction_4(report_folder: str, variant_instruction: str, report_type_inst
 def instruction_5(report_folder: str, case_file: str, variant_instruction: str, report_type_instruction: str):
     '''Un caso único'''
 
-    start_date = datetime.now()
     vns(report_folder, case_file, variant_instruction, report_type_instruction)
-    end_date = datetime.now()
-    elapsed_time = (end_date - start_date).seconds
-    print(f'Elapsed time: {elapsed_time} seconds')
+    print(f'Finished execution.')
 
 
 def get_user_instructions():
@@ -400,7 +394,7 @@ def get_user_instructions():
 
     case_file = None
     if instruction == '5':
-        case_file = input(enter_name_case_format)
+        case_file = input(enter_name_case)
 
     return instruction, report_type_instruction, variant_instruction, case_file
 
