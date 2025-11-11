@@ -1,31 +1,13 @@
-import os
-import sys
 from google import genai
 from google.genai import types
-from dotenv import load_dotenv
 from pydantic import BaseModel
-from config import cases_dir, instruction_text_utils_create_case, enter_name_case_format_multiple, system_instruction
+from config import cases_dir, system_instruction
 
 
 class Triads(BaseModel):
     num_1: int
     num_2: int
     num_3: int
-
-
-def cargar_configuracion():
-    '''Validar y cargar variables de entorno'''
-
-    load_dotenv()
-
-    API_KEY = os.environ.get('API_KEY')
-    if not API_KEY:
-        print(f"\n--- ERROR FATAL ---")
-        print(f"La variable de entorno 'API_KEY' no ha sido establecida.")
-        print("El programa no puede continuar sin esta configuración.")
-        sys.exit(1)
-
-    return {"API_KEY": API_KEY}
 
 
 def call_llm(client: genai.Client, target: int, width: str, height: str):
@@ -69,50 +51,3 @@ def create_case(client: genai.Client, case_file: str):
         print(f"[ÉXITO] Archivo creado: {nombre_archivo}")
     except IOError as e:
         print(f"[ERROR] No se pudo crear {nombre_archivo}: {e}")
-
-
-def instruction_1(client: genai.Client):
-    '''Todos los casos'''
-
-    for case_file in os.listdir(cases_dir):
-        case = case_file.split('.')[0]
-        create_case(client, case)
-
-
-def instruction_2(client: genai.Client):
-    '''Determinados casos'''
-
-    selected_cases = []
-    while True:
-        case_file = input(enter_name_case_format_multiple)
-        if case_file == '':
-            break
-        selected_cases.append(case_file)
-
-    for case_file in selected_cases:
-        create_case(client, case_file)
-
-
-def instruction_3(client: genai.Client):
-    '''Un caso único'''
-
-    case_file = input(enter_name_case_format_multiple)
-    create_case(client, case_file)
-
-
-def run():
-
-    instruction = input(instruction_text_utils_create_case)
-    if not instruction in ['1', '2', '3']:
-        print('Instrucción no encontrada ❌!')
-        return
-
-    config = cargar_configuracion()
-    client: genai.Client = genai.Client(api_key=config['API_KEY'])
-
-    if instruction == '1':
-        instruction_1(client)
-    if instruction == '2':
-        instruction_2(client)
-    if instruction == '3':
-        instruction_3(client)

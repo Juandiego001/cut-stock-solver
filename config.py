@@ -5,6 +5,7 @@ PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 ampl_data_dir = os.path.join(PROJECT_ROOT, 'ampl_data')
 cases_dir = os.path.join(PROJECT_ROOT, 'cases')
 v2_reports_dir = os.path.join(PROJECT_ROOT, 'v2/reports')
+ampl_run_cases_reports_dir = os.path.join(PROJECT_ROOT, 'ampl/reports')
 
 # Comunes
 enter_name_case = 'Digite el nombre del caso que desea ejecutar: '
@@ -108,6 +109,16 @@ instruction_text_utils_create_case = '''
 1- Todos los casos (que nada más estén creados en el directorio de cases).
 2- Determinados casos.
 3- Un caso único.
+
+Ingrese un número: '''
+
+
+instruction_text_utils_create_case_ai_instruction = '''
+¿Qué sistema de AI desea utilizar para la generación de los casos?
+
+1- Ollama.
+2- Gemini.
+3- OpenAI.
 
 Ingrese un número: '''
 

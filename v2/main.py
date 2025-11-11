@@ -356,8 +356,7 @@ def generate_solution(ancho_grande, largo_grande, items: list[Item], debug: bool
     s.desperdicio = z_s
 
     '''Calculo del fitness'''
-    s.fitness = z_s + 2 * \
-        sum([dem_fal for dem_fal in s.dem_fal.values()])
+    s.fitness = z_s + (2 * sum([dem_fal for dem_fal in s.dem_fal.values()]))
 
     return s
 

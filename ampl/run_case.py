@@ -1,21 +1,45 @@
 import os
 from amplpy import AMPL
 from pathlib import Path
-from config import ampl_data_dir, instruction_text_ampl_run_case, enter_name_case_format_multiple, ampl_run_file, enter_name_case_format
+from datetime import datetime
+from config import ampl_data_dir, instruction_text_ampl_run_case, enter_name_case_format_multiple, ampl_run_file, enter_name_case_format, ampl_run_cases_reports_dir
 
 
-def ejecutar_modelo_ampl(data: str):
+def save_report(report_folder: str,
+                case: str,
+                z: str,
+                _ampl_elapsed_time: str,
+                _total_solve_elapsed_time: str,
+                solve_result_num: str):
+
+    if not os.path.exists(f'{report_folder}/summary.txt'):
+        with open(f'{report_folder}/summary.txt', 'a+') as archivo:
+            archivo.write(
+                f'Caso\t\t|\tDesperdicio\t|\tAMPL Elapsed Time\t|\tTotal Solve Elapsed Time\t|\tStatus\n{"-" * 97}\n')
+
+    with open(f'{report_folder}/summary.txt', 'a+') as archivo:
+        archivo.write(
+            f'{case}\t|\t{z}\t\t|\t{_ampl_elapsed_time:.6f}\t\t\t|\t{_total_solve_elapsed_time:.6f}\t\t\t\t\t|\t{solve_result_num}\n')
+
+
+class SilenciosoOutputHandler:
+    """Ignora toda la salida de AMPL."""
+
+    def output(self, kind, msg):
+        pass
+
+
+def ejecutar_modelo_ampl(report_folder: str, case: str):
     """
     Ejecuta un script .run de AMPL, inyectando dinámicamente
     el nombre del archivo .dat.
 
     Args:
-        ampl_run_file (str): Ruta al script .run modificado (ej: "script_dinamico.run")
+        report_folder (str): Generación de reportes.
         data (str): Ruta al archivo .dat que se debe cargar (ej: "50_50_90.dat")
     """
 
-    data = f'{data}.dat'
-    # Validar que los archivos existen
+    data = f'{case}.dat'
     if not os.path.exists(f'{ampl_data_dir}/{ampl_run_file}'):
         print(f"Error: No se encuentra el script .run: {ampl_run_file}")
         return
@@ -25,25 +49,26 @@ def ejecutar_modelo_ampl(data: str):
 
     try:
         ampl: AMPL = AMPL()
+        ampl.set_output_handler(SilenciosoOutputHandler())
+        ampl.set_option('solver_msg', False)
         ampl.cd(ampl_data_dir)
         ampl.eval("param data_file_path symbolic;")
         ampl.param["data_file_path"] = os.path.join(ampl_data_dir, data)
-        print(
-            f"--- Ejecutando '{ampl_run_file}' con datos de '{data}' ---")
+        print(f"--- Ejecutando '{ampl_run_file}' con datos de '{data}' ---")
         ampl.read(f'{ampl_data_dir}/{ampl_run_file}')
 
-        print("\n--- Resultados (extraídos en Python) ---")
-
-        # Obtener el valor de la función objetivo
         z = ampl.get_objective('z').value()
-        print(f"Valor de la función objetivo (z): {z}")
+        _ampl_elapsed_time = ampl.get_parameter("_ampl_elapsed_time").value()
+        _total_solve_elapsed_time = ampl.get_parameter(
+            "_total_solve_elapsed_time").value()
+        solve_result_num = ampl.get_parameter("solve_result_num").value()
 
-        # Obtener los parámetros de tiempo que calculaste
-        t_carga = ampl.get_parameter("t_carga").value()
-        t_solve = ampl.get_parameter("t_solve").value()
-
-        print(f"Tiempo de Carga (t_carga): {t_carga:.4f}s")
-        print(f"Tiempo de Solución (t_solve): {t_solve:.4f}s")
+        save_report(report_folder,
+                    case,
+                    z,
+                    _ampl_elapsed_time,
+                    _total_solve_elapsed_time,
+                    solve_result_num)
 
     except Exception as e:
         print(f"Ha ocurrido un error durante la ejecución de AMPL: {e}")
@@ -54,16 +79,16 @@ def ejecutar_modelo_ampl(data: str):
     print("-" * 50)
 
 
-def instruction_1():
+def instruction_1(report_folder: str):
     '''Todos los casos'''
 
     all_data_files = [f.name for f in Path(ampl_data_dir).glob('*.dat')]
     for case_file in all_data_files:
         case = case_file.split('.')[0]
-        ejecutar_modelo_ampl(case)
+        ejecutar_modelo_ampl(report_folder, case)
 
 
-def instruction_2():
+def instruction_2(report_folder: str):
     '''Determinados casos'''
 
     selected_cases = []
@@ -73,14 +98,14 @@ def instruction_2():
             break
         selected_cases.append(case_file)
     for case_file in selected_cases:
-        ejecutar_modelo_ampl(case_file)
+        ejecutar_modelo_ampl(report_folder, case_file)
 
 
-def instruction_3():
+def instruction_3(report_folder: str):
     '''Un caso único'''
 
     case_file = input(enter_name_case_format)
-    ejecutar_modelo_ampl(case_file)
+    ejecutar_modelo_ampl(report_folder, case_file)
 
 
 def run():
@@ -91,9 +116,14 @@ def run():
         print('Instrucción no encontrada ❌!')
         return
 
+    date_now = str(datetime.now().replace(microsecond=0)
+                   ).replace(' ', '_').replace(':', '_')
+    report_folder = f'{ampl_run_cases_reports_dir}/report_{date_now}'
+    os.mkdir(report_folder)
+
     if instruction == '1':
-        instruction_1()
+        instruction_1(report_folder)
     if instruction == '2':
-        instruction_2()
+        instruction_2(report_folder)
     if instruction == '3':
-        instruction_3()
+        instruction_3(report_folder)

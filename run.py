@@ -2,7 +2,7 @@ import os
 from v2.run import run as v2
 from ampl.generate_data import run as generate_ampl_data
 from ampl.run_case import run as run_ampl_case
-from utils.create_cases import run as create_cases
+from utils.create_cases.run import run as create_cases
 from utils.validate_cases import run as validate_cases
 from utils.get_ocupation import run as get_ocupation
 from config import cases_dir, ampl_data_dir, v2_reports_dir, instruction_text_main

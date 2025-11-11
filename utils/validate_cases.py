@@ -16,7 +16,8 @@ def validate_cases(case_file: str):
 
     piezas = []
     for i in range(1, len(lines)):
-        _, ancho, largo = lines[i].split(',')
+        _, ancho, largo = lines[i].replace('\n', '').split(',')
+        # print(f'Ancho: {ancho} Largo: {largo}')
 
         if buscar_pieza(ancho, largo, piezas):
             print(f'¡Atención!')

@@ -28,11 +28,14 @@ def lectura(case: str, variant: str):
     lineas_archivo = f.readlines()
     ancho_base, largo_base = lineas_archivo[0].split(',')
 
+    id = 1
     for line in lineas_archivo[1:]:
         demanda, ancho, largo = line.split(',')
         for i in range(int(demanda)):
-            item = Item(i+1, int(demanda), int(ancho), int(largo))
+            item = Item(id, int(demanda), int(ancho), int(largo))
             items.append(item)
+
+        id += 1
 
     f.close()
 
@@ -154,9 +157,19 @@ def generate_excel_report(report_folder,
 def generate_text_report(report_folder: str, case: str, mejor_solucion: Solution):
     '''Generar reporte de texto simple'''
 
-    with open(f'{report_folder}/{case}.txt', 'w+') as archivo:
-        archivo.write(
-            f'Caso {case}\nDesperdicio:\t{mejor_solucion.desperdicio}\nFitness:\t\t{mejor_solucion.fitness}')
+    if not os.path.exists(f'{report_folder}/summary.txt'):
+        with open(f'{report_folder}/summary.txt', 'a+') as archivo:
+            archivo.write(
+                f'Caso\t\t|\tDesperdicio\t|\tFitness\n-------------------------------------------\n')
+
+    if mejor_solucion.desperdicio > 999:
+        with open(f'{report_folder}/summary.txt', 'a+') as archivo:
+            archivo.write(
+                f'{case}\t|\t{mejor_solucion.desperdicio}\t\t|\t{mejor_solucion.fitness}\n')
+    else:
+        with open(f'{report_folder}/summary.txt', 'a+') as archivo:
+            archivo.write(
+                f'{case}\t|\t{mejor_solucion.desperdicio}\t\t\t|\t{mejor_solucion.fitness}\n')
 
 
 def vns(report_folder: str, case: str, variant: str, report_type: str = 'TXT'):
@@ -372,7 +385,7 @@ def get_user_instructions():
     instruction = input(instruction_text_v2_run)
     if not instruction in ['1', '2', '3', '4', '5']:
         print('Instrucción no encontrada ❌!')
-        return
+        sys.exit(1)
 
     if instruction in ['1', '2', '3', '4']:
         report_type_instruction = check_report_type()
@@ -383,7 +396,7 @@ def get_user_instructions():
     variant_instruction = input(instruction_text_v2_variant)
     if not variant_instruction in ['1', '2', '3']:
         print('Instrucción no encontrada ❌!')
-        return
+        sys.exit(1)
 
     case_file = None
     if instruction == '5':
