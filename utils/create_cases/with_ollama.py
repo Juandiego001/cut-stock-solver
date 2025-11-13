@@ -1,8 +1,8 @@
 import json
 from typing import List
 from pydantic import BaseModel
-from config import cases_dir, system_instruction_ollama
-from ollama import Client, GenerateResponse
+from config import cases_dir, system_instruction_ollama, save_file_case
+from ollama import Client
 
 
 class Triads(BaseModel):
@@ -66,14 +66,4 @@ def create_case(client: Client, case_file: str):
     width, height, ocupation = case_file.split('_')
     target_value = round(int(width) * int(height) * (int(ocupation)/100))
     the_triads: list[list[int, int, int]] = call_llm(client, target_value, width, height)
-
-    nombre_archivo = f'{width}_{height}_{ocupation}.txt'
-    try:
-        with open(f'{cases_dir}/{nombre_archivo}', 'w') as f:
-            f.writelines(f'{width},{height}')
-            for triad in the_triads:
-                f.writelines(
-                    f'\n{triad[0]},{triad[1]},{triad[2]}')
-        print(f"[ÉXITO] Archivo creado: {nombre_archivo}")
-    except IOError as e:
-        print(f"[ERROR] No se pudo crear {nombre_archivo}: {e}")
+    save_file_case(width, height, ocupation, the_triads)

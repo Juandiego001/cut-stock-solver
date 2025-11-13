@@ -1,12 +1,13 @@
 import os
-import sys
 import copy
 import random
 from datetime import datetime
 from .classes import Item, Solution
 from multiprocessing import Process
 from .main import generate_solution, vecindario_2opt, vecindario_insertions, vecindario_swap
-from config import cases_dir, v2_reports_dir, instruction_text_v2_run, enter_name_case_multiple, cases_dir, enter_name_case, instruction_text_v2_report_type, instruction_text_v2_report_type_single, instruction_text_v2_variant
+from config import cases_dir, v2_reports_dir, instruction_text_v2_run, enter_name_case_multiple, cases_dir, enter_name_case, instruction_text_v2_report_type, \
+    instruction_text_v2_report_type_single, instruction_text_v2_variant, validate_instruction, instruction_text_v2_group, possible_groups, get_group_name, cases_group_dir, \
+    get_cases_by_group
 from .gen_reports.gen_reports_excel import create_sheets_iterations, create_sheets_summary, write_iterations_summary, write_solution_debug, write_solution_info, write_solution_iteration_info, write_test_case
 
 
@@ -165,11 +166,11 @@ def generate_text_report(report_folder: str, case: str, elapsed_time: float, mej
     if mejor_solucion.desperdicio > 999:
         with open(f'{report_folder}/summary.txt', 'a+') as archivo:
             archivo.write(
-                f'{case}\t|\t{elapsed_time}\t\t\t|\t{mejor_solucion.desperdicio}\t\t|\t{mejor_solucion.fitness}\n')
+                f'{case}\t|\t{elapsed_time:.3f}\t\t\t|\t{mejor_solucion.desperdicio}\t\t|\t{mejor_solucion.fitness}\n')
     else:
         with open(f'{report_folder}/summary.txt', 'a+') as archivo:
             archivo.write(
-                f'{case}\t|\t{elapsed_time}\t\t\t|\t{mejor_solucion.desperdicio}\t\t\t|\t{mejor_solucion.fitness}\n')
+                f'{case}\t|\t{elapsed_time:.3f}\t\t\t|\t{mejor_solucion.desperdicio}\t\t\t|\t{mejor_solucion.fitness}\n')
 
 
 def vns(report_folder: str, case: str, variant: str, report_type: str = 'TXT'):
@@ -236,7 +237,7 @@ def vns(report_folder: str, case: str, variant: str, report_type: str = 'TXT'):
 
     print(f'Case {case}, iterations: {iterations}')
     end_date = datetime.now()
-    elapsed_time: float = (end_date - start_date).seconds
+    elapsed_time: float = (end_date - start_date).total_seconds()
 
     if with_excel:
         generate_excel_report(
@@ -289,10 +290,7 @@ def check_report_type():
     '''Obtiene del usuario el tipo de reporte a generar deseado'''
 
     instruction = input(instruction_text_v2_report_type)
-    if not instruction in ['1', '2', '3', '4', '5']:
-        print('Instrucción no encontrada ❌!')
-        sys.exit(1)
-
+    validate_instruction(5, instruction)
     return instruction
 
 
@@ -366,7 +364,23 @@ def instruction_4(report_folder: str, variant_instruction: str, report_type_inst
                          variant_instruction, report_type_instruction)
 
 
-def instruction_5(report_folder: str, case_file: str, variant_instruction: str, report_type_instruction: str):
+def instruction_5(report_folder: str, variant_instruction: str, report_type_instruction: str):
+    '''Grupo de casos (en paralelo)'''
+
+    cases = get_cases_by_group()
+    parallel_execution(report_folder, cases,
+                       variant_instruction, report_type_instruction)
+
+
+def instruction_6(report_folder: str, variant_instruction: str, report_type_instruction: str):
+    '''Grupo de casos (en secuencial)'''
+
+    cases = get_cases_by_group()
+    sequential_execution(report_folder, cases,
+                         variant_instruction, report_type_instruction)
+
+
+def instruction_7(report_folder: str, case_file: str, variant_instruction: str, report_type_instruction: str):
     '''Un caso único'''
 
     vns(report_folder, case_file, variant_instruction, report_type_instruction)
@@ -377,23 +391,19 @@ def get_user_instructions():
     '''Obtener indicaciones sobre cómo ejecutar el script'''
 
     instruction = input(instruction_text_v2_run)
-    if not instruction in ['1', '2', '3', '4', '5']:
-        print('Instrucción no encontrada ❌!')
-        sys.exit(1)
+    validate_instruction(7, instruction)
 
-    if instruction in ['1', '2', '3', '4']:
+    if instruction in ['1', '2', '3', '4', '5', '6']:
         report_type_instruction = check_report_type()
     else:
         report_type_instruction = get_report_type_single(
             input(instruction_text_v2_report_type_single))
 
     variant_instruction = input(instruction_text_v2_variant)
-    if not variant_instruction in ['1', '2', '3']:
-        print('Instrucción no encontrada ❌!')
-        sys.exit(1)
+    validate_instruction(3, variant_instruction)
 
     case_file = None
-    if instruction == '5':
+    if instruction == '7':
         case_file = input(enter_name_case)
 
     return instruction, report_type_instruction, variant_instruction, case_file
@@ -420,5 +430,11 @@ def run():
         instruction_4(report_folder, variant_instruction,
                       report_type_instruction)
     if instruction == '5':
-        instruction_5(report_folder, case_file,
+        instruction_5(report_folder, variant_instruction,
+                      report_type_instruction)
+    if instruction == '6':
+        instruction_6(report_folder, variant_instruction,
+                      report_type_instruction)
+    if instruction == '7':
+        instruction_7(report_folder, case_file,
                       variant_instruction, report_type_instruction)

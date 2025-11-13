@@ -2,7 +2,8 @@ import os
 from amplpy import AMPL
 from pathlib import Path
 from datetime import datetime
-from config import ampl_data_dir, instruction_text_ampl_run_case, enter_name_case_multiple, ampl_run_file, enter_name_case, ampl_run_cases_reports_dir
+from config import ampl_data_dir, instruction_text_ampl_run_case, enter_name_case_multiple, ampl_run_file, enter_name_case, ampl_run_cases_reports_dir, validate_instruction, \
+    get_cases_by_group
 
 
 def save_report(report_folder: str,
@@ -11,6 +12,7 @@ def save_report(report_folder: str,
                 _ampl_elapsed_time: str,
                 _total_solve_elapsed_time: str,
                 solve_result_num: str):
+    '''Guarda un report simple de la ejecución de AMPL'''
 
     if not os.path.exists(f'{report_folder}/summary.txt'):
         with open(f'{report_folder}/summary.txt', 'a+') as archivo:
@@ -93,29 +95,33 @@ def instruction_2(report_folder: str):
 
     selected_cases = []
     while True:
-        case_file = input(enter_name_case_multiple)
-        if case_file == '':
+        case = input(enter_name_case_multiple)
+        if case == '':
             break
-        selected_cases.append(case_file)
-    for case_file in selected_cases:
-        ejecutar_modelo_ampl(report_folder, case_file)
+        selected_cases.append(case)
+    for case in selected_cases:
+        ejecutar_modelo_ampl(report_folder, case)
 
 
 def instruction_3(report_folder: str):
+    '''Grupo de casos'''
+
+    cases = get_cases_by_group()
+    for case in cases:
+        ejecutar_modelo_ampl(report_folder, case)
+
+
+def instruction_4(report_folder: str):
     '''Un caso único'''
 
-    case_file = input(enter_name_case)
-    ejecutar_modelo_ampl(report_folder, case_file)
+    case = input(enter_name_case)
+    ejecutar_modelo_ampl(report_folder, case)
 
 
 def run():
 
     instruction = input(instruction_text_ampl_run_case)
-
-    if not instruction in ['1', '2', '3']:
-        print('Instrucción no encontrada ❌!')
-        return
-
+    validate_instruction(4, instruction)
     date_now = str(datetime.now().replace(microsecond=0)
                    ).replace(' ', '_').replace(':', '_')
     report_folder = f'{ampl_run_cases_reports_dir}/report_{date_now}'
@@ -127,3 +133,5 @@ def run():
         instruction_2(report_folder)
     if instruction == '3':
         instruction_3(report_folder)
+    if instruction == '4':
+        instruction_4(report_folder)

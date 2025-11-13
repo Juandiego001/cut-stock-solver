@@ -15,7 +15,7 @@ a[o,k,q,j] p, parámetro binario o coeficiente binario que se define:
 '''
 import os
 from datetime import datetime
-from config import ampl_data_dir, cases_dir, instruction_text_ampl_generate, enter_name_case_multiple, enter_name_case
+from config import ampl_data_dir, cases_dir, instruction_text_ampl_generate, enter_name_case_multiple, enter_name_case, validate_instruction, get_cases_by_group
 from multiprocessing import Process
 
 
@@ -191,8 +191,8 @@ def sequential_execution(cases: list[str]):
         start_date = datetime.now()
         generate_ampl_data(case)
         end_date = datetime.now()
-        elapsed_time = (end_date - start_date).seconds
-        print(f'Elapsed time: {elapsed_time} seconds for case {case}')
+        elapsed_time = (end_date - start_date).total_seconds()
+        print(f'Elapsed time: {elapsed_time:.3f} seconds for case {case}')
 
 
 def get_cases():
@@ -236,23 +236,34 @@ def instruction_4():
 
 
 def instruction_5():
+    '''Grupo de casos (en paralelo)'''
+
+    cases = get_cases_by_group()
+    parallel_execution(cases)
+
+
+def instruction_6():
+    '''Grupo de casos (en secuencial)'''
+
+    cases = get_cases_by_group()
+    sequential_execution(cases)
+
+
+def instruction_7():
     '''Un caso único'''
 
     case_file = input(enter_name_case)
     start_date = datetime.now()
     generate_ampl_data(case_file)
     end_date = datetime.now()
-    elapsed_time = (end_date - start_date).seconds
-    print(f'Elapsed time: {elapsed_time} seconds')
+    elapsed_time = (end_date - start_date).total_seconds()
+    print(f'Elapsed time: {elapsed_time:.3f} seconds')
 
 
 def run():
 
     instruction = input(instruction_text_ampl_generate)
-
-    if not instruction in ['1', '2', '3', '4', '5']:
-        print('Instrucción no encontrada ❌!')
-        return
+    validate_instruction(7, instruction)
 
     if instruction == '1':
         instruction_1()
@@ -264,3 +275,7 @@ def run():
         instruction_4()
     if instruction == '5':
         instruction_5()
+    if instruction == '6':
+        instruction_6()
+    if instruction == '7':
+        instruction_7()

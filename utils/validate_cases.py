@@ -1,5 +1,6 @@
 import os
-from config import cases_dir, instruction_text_utils_validate_cases, enter_name_case, enter_name_case_multiple
+from config import cases_dir, instruction_text_utils_validate_cases, enter_name_case, enter_name_case_multiple, validate_instruction,\
+    instruction_text_utils_validate_cases_group, get_group_name, possible_groups, get_cases_by_group
 
 
 def buscar_pieza(x, y, piezas):
@@ -55,28 +56,34 @@ def instruction_2():
 
     selected_cases = []
     while True:
-        case_file = input(enter_name_case_multiple)
-        if case_file == '':
+        case = input(enter_name_case_multiple)
+        if case == '':
             break
-        selected_cases.append(case_file)
+        selected_cases.append(case)
 
-    for case_file in selected_cases:
-        validate_cases(case_file)
+    for case in selected_cases:
+        validate_cases(case)
 
 
 def instruction_3():
+    '''Grupo de casos'''
+
+    cases = get_cases_by_group()
+    for case in cases:
+        validate_cases(case)
+
+
+def instruction_4():
     '''Un caso único'''
 
-    case_file = input(enter_name_case)
-    validate_cases(case_file)
+    case = input(enter_name_case)
+    validate_cases(case)
 
 
 def run():
 
     instruction = input(instruction_text_utils_validate_cases)
-    if not instruction in ['1', '2', '3']:
-        print('Instrucción no encontrada ❌!')
-        return
+    validate_instruction(4, instruction)
 
     if instruction == '1':
         instruction_1()
@@ -84,3 +91,5 @@ def run():
         instruction_2()
     if instruction == '3':
         instruction_3()
+    if instruction == '4':
+        instruction_4()
