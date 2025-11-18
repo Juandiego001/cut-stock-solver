@@ -112,8 +112,8 @@ def instruction_4(save_func: function):
         selected_cases.append(case)
 
     for case in selected_cases:
-        width, height, ocupation = case.split('_') + ['']
-
+        data = case.split('_')
+        width, height, ocupation = (data[0], data[1], data[2] if len(data) > 2 else None)
         if ocupation:
             target = int(int(width) * int(height) * (int(ocupation)/100))
             the_triads = get_manual_items(case, str(target))
