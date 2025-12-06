@@ -187,7 +187,7 @@ def vns(report_folder: str, case: str, variant: str, report_type: str = 'TXT'):
     with_excel_and_debug = report_type == 'EXCEL_AND_DEBUG'
 
     ancho_grande, largo_grande, items = lectura(case, variant)
-    sol_ini = generate_solution(ancho_grande, largo_grande, items)
+    sol_ini = generate_solution(ancho_grande, largo_grande, items, with_excel_and_debug)
     mejor_vecino = mejor_solucion = copy.deepcopy(sol_ini)
 
     vecinos_summary = []
@@ -240,6 +240,7 @@ def vns(report_folder: str, case: str, variant: str, report_type: str = 'TXT'):
     elapsed_time: float = (end_date - start_date).total_seconds()
 
     if with_excel:
+        print('WITH_EXCEL_AND_DEBUG: ', with_excel_and_debug)
         generate_excel_report(
             report_folder=report_folder,
             case=case,

@@ -296,6 +296,8 @@ def write_solution_info(ws, solution: Solution):
 def write_solution_debug(ws: Worksheet, matrixes):
     '''Escribir el debug de la solución como tal'''
 
+    print('MATRIXES: ', matrixes)
+
     # Change column widths
     base_cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
                  'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']

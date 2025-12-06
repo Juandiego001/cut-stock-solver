@@ -384,7 +384,7 @@ def vecindario_swap(ancho_grande, largo_grande, items: list[Item], debug=False):
     vecinos = []
 
     for i in all_swaps:
-        s_vecino = generate_solution(ancho_grande, largo_grande, i)
+        s_vecino = generate_solution(ancho_grande, largo_grande, i, debug)
         if debug:
             vecinos.append(copy.deepcopy(s_vecino))
 
@@ -424,7 +424,7 @@ def vecindario_insertions(ancho_grande, largo_grande, items: list[Item], debug=F
     vecinos = []
 
     for i in all_insertions:
-        s_vecino = generate_solution(ancho_grande, largo_grande, i)
+        s_vecino = generate_solution(ancho_grande, largo_grande, i, debug)
         if debug:
             vecinos.append(copy.deepcopy(s_vecino))
 
@@ -462,7 +462,7 @@ def vecindario_2opt(ancho_grande, largo_grande, items: list[Item], debug=False):
     vecinos = []
 
     for i in all_2opt:
-        s_vecino = generate_solution(ancho_grande, largo_grande, i)
+        s_vecino = generate_solution(ancho_grande, largo_grande, i, debug)
         if debug:
             vecinos.append(copy.deepcopy(s_vecino))
 
